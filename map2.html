@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BusTrack — Live Map</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <!-- Fonts: Syne (headings) + DM Sans (body) — same as before -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ════════════════════════════════════════
+       RESET + TOKENS  (extended palette)
+    ════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0e1a;
+      --surface: rgba(17, 24, 39, 0.94);
+      --surface2: rgba(26, 34, 53, 0.97);
+      --surface3: rgba(13, 19, 35, 0.88);
+
+      --accent:  #f97316;
+      --accent2: #fb923c;
+      --green:   #22c55e;
+      --blue:    #3b82f6;
+      --red:     #ef4444;
+
+      --text:    #f1f5f9;
+      --muted:   #94a3b8;
+      --faint:   #4b5768;
+
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(255,255,255,0.13);
+
+      --shadow-sm: 0 4px 16px rgba(0,0,0,0.4);
+      --shadow:    0 8px 32px rgba(0,0,0,0.55);
+      --shadow-lg: 0 16px 56px rgba(0,0,0,0.7);
+
+      --radius:    14px;
+      --radius-sm: 8px;
+      --radius-xs: 6px;
+
+      --topbar-h: 62px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ════════════════════════════════════════
+       MAP  (same #map id)
+    ════════════════════════════════════════ */
+    #map {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* Darker, slightly desaturated tiles */
+    .leaflet-tile-pane {
+      filter: brightness(0.82) saturate(0.85) hue-rotate(4deg);
+    }
+
+    /* Hide default zoom control (we add custom ones) */
+    .leaflet-control-zoom { display: none !important; }
+
+    /* ════════════════════════════════════════
+       TOP BAR  (same #topbar id, enhanced)
+    ════════════════════════════════════════ */
+    #topbar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(1.5);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+    }
+
+    /* Back button — same href logic */
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      text-decoration: none;
+      transition: all 0.18s;
+      flex-shrink: 0;
+    }
+    .back-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(249,115,22,0.08);
+    }
+
+    /* Brand in topbar */
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+    .topbar-logo {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      box-shadow: 0 0 12px rgba(249,115,22,0.4);
+    }
+    .topbar-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .topbar-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border-hi);
+      flex-shrink: 0;
+    }
+
+    /* Route display — same IDs: from-badge, to-badge */
+    .route-display {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .route-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--green);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+      transition: max-width 0.2s;
+    }
+    .route-badge.dest {
+      background: rgba(249,115,22,0.1);
+      border-color: rgba(249,115,22,0.22);
+      color: var(--accent);
+    }
+    .route-badge .rb-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .route-badge:not(.dest) .rb-dot { background: var(--green); }
+    .route-badge.dest .rb-dot       { background: var(--accent); }
+
+    .route-arrow {
+      color: var(--faint);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    /* Live badge — same .live-badge class */
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #f87171;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: livePulse 1.2s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.35; transform:scale(0.65); }
+    }
+
+    /* Bus count */
+    .bus-count {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .bus-count strong {
+      font-family: 'Syne', sans-serif;
+      color: var(--accent);
+      font-size: 13px;
+    }
+
+    /* Map controls (zoom + recenter) */
+    #map-controls {
+      position: absolute;
+      top: calc(var(--topbar-h) + 12px);
+      right: 14px;
+      z-index: 800;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .map-ctrl-btn {
+      width: 36px; height: 36px;
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--muted);
+      backdrop-filter: blur(12px);
+      transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .map-ctrl-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(249,115,22,0.08);
+    }
+    .map-ctrl-btn:active { transform: scale(0.94); }
+    .ctrl-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 6px;
+    }
+
+    /* ════════════════════════════════════════
+       SIDEBAR  (same #sidebar id, enhanced)
+    ════════════════════════════════════════ */
+    #sidebar {
+      position: absolute;
+      top: calc(var(--topbar-h) + 10px);
+      right: 14px;
+      bottom: 14px;
+      z-index: 900;
+      width: 290px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      padding-right: 2px;
+      /* push right of map controls */
+      margin-right: 46px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-hi) transparent;
+    }
+    #sidebar::-webkit-scrollbar { width: 3px; }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+    /* ════════════════════════════════════════
+       BUS CARD  (same .bus-card class, enhanced)
+    ════════════════════════════════════════ */
+    .bus-card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .bus-card:hover {
+      border-color: rgba(249,115,22,0.3);
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(249,115,22,0.08) inset;
+    }
+    @keyframes cardIn {
+      from { opacity:0; transform:translateX(16px) scale(0.97); }
+      to   { opacity:1; transform:translateX(0) scale(1); }
+    }
+
+    /* Colored top accent line */
+    .bus-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #ea580c, transparent);
+    }
+
+    /* Subtle inner glow */
+    .bus-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at top right, rgba(249,115,22,0.04), transparent 60%);
+      pointer-events: none;
+    }
+
+    .bus-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .bus-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bus-status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: livePulse 1.6s ease-in-out infinite;
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .speed-badge {
+      background: rgba(249,115,22,0.12);
+      border: 1px solid rgba(249,115,22,0.22);
+      border-radius: var(--radius-xs);
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.3px;
+    }
+
+    /* 2×2 stat grid */
+    .bus-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .meta-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 7px 9px;
+      transition: background 0.15s;
+    }
+    .meta-item:hover { background: rgba(255,255,255,0.05); }
+    .meta-label {
+      font-size: 9px;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 3px;
+    }
+    .meta-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .meta-value.green  { color: var(--green); }
+    .meta-value.orange { color: var(--accent); }
+
+    /* Progress bar (new visual addition) */
+    .bus-progress-wrap {
+      margin-top: 10px;
+    }
+    .bus-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--faint);
+      margin-bottom: 4px;
+    }
+    .bus-progress-track {
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .bus-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(0.25,1,0.5,1);
+    }
+
+    /* Next stop chip */
+    .next-stop {
+      margin-top: 8px;
+      padding: 7px 10px;
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.14);
+      border-radius: var(--radius-xs);
+      font-size: 11px;
+      color: #93c5fd;
+      line-height: 1.4;
+    }
+    .next-stop-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--faint);
+      margin-bottom: 3px;
+    }
+    .next-stop.dest {
+      color: #86efac;
+      background: rgba(34,197,94,0.07);
+      border-color: rgba(34,197,94,0.15);
+    }
+
+    /* ════════════════════════════════════════
+       FOCUS DASHBOARD  (same #focus-dashboard id)
+       Upgraded from a plain box to a polished panel
+    ════════════════════════════════════════ */
+    #focus-dashboard {
+      position: absolute;
+      left: 14px;
+      top: calc(var(--topbar-h) + 12px);
+      z-index: 900;
+      width: 230px;
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(249,115,22,0.05) inset;
+      overflow: hidden;
+    }
+    #focus-dashboard::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+    .fd-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .fd-icon {
+      width: 28px; height: 28px;
+      background: rgba(249,115,22,0.12);
+      border: 1px solid rgba(249,115,22,0.22);
+      border-radius: var(--radius-xs);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+    }
+    .fd-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .fd-subtitle {
+      font-size: 10px;
+      color: var(--faint);
+      margin-top: 1px;
+    }
+    .fd-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .fd-stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 7px 8px;
+    }
+    .fd-stat-label {
+      font-size: 9px;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .fd-stat-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .fd-stat-value.accent { color: var(--accent); }
+    .fd-stat-value.green  { color: var(--green);  }
+
+    /* ════════════════════════════════════════
+       LEGEND  (same #legend id, enhanced)
+    ════════════════════════════════════════ */
+    #legend {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      z-index: 900;
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      min-width: 140px;
+    }
+    .legend-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 9px;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 9px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .legend-item:last-child { margin-bottom: 0; }
+    .legend-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* ════════════════════════════════════════
+       LOADING  (same #loading id, enhanced)
+    ════════════════════════════════════════ */
+    #loading {
+      position: absolute;
+      inset: 0;
+      z-index: 2000;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.5s ease;
+    }
+    .loading-icon {
+      font-size: 48px;
+      animation: busFloat 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 4px 16px rgba(249,115,22,0.4));
+    }
+    @keyframes busFloat {
+      0%,100% { transform: translateY(0)   rotate(-1deg); }
+      50%      { transform: translateY(-8px) rotate(1deg); }
+    }
+    .loading-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .loading-bar-wrap {
+      width: 220px;
+      height: 3px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .loading-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.35s ease;
+      box-shadow: 0 0 12px rgba(249,115,22,0.5);
+    }
+    .loading-status {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ════════════════════════════════════════
+       TOAST  (same #toast id, enhanced)
+    ════════════════════════════════════════ */
+    #toast {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      z-index: 1500;
+      background: var(--surface2);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      padding: 9px 18px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
+    @media (max-width: 640px) {
+      #sidebar {
+        width: calc(100vw - 28px);
+        top: auto;
+        bottom: 14px;
+        right: 14px;
+        left: 14px;
+        max-height: 220px;
+        margin-right: 0;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .bus-card { min-width: 250px; flex-shrink: 0; }
+      #focus-dashboard { display: none; }
+      .route-badge { max-width: 110px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════ LOADING OVERLAY (same id) ════ -->
+<div id="loading">
+  <div class="loading-icon">🚌</div>
+  <div class="loading-title">Loading Route</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="load-bar"></div>
+  </div>
+  <div class="loading-status" id="load-status">Initializing map…</div>
+</div>
+
+<!-- ════ MAP (same id) ════ -->
+<div id="map"></div>
+
+<!-- ════ TOP BAR (same id, enhanced content) ════ -->
+<div id="topbar">
+  <a href="bustrack.html" class="back-btn" title="Back">←</a>
+
+  <div class="topbar-brand">
+    <div class="topbar-logo">🚌</div>
+    <div class="topbar-name">BusTrack</div>
+  </div>
+  <div class="topbar-sep"></div>
+
+  <div class="route-display">
+    <div class="route-badge" id="from-badge">
+      <div class="rb-dot"></div>
+      <span>—</span>
+    </div>
+    <span class="route-arrow">→</span>
+    <div class="route-badge dest" id="to-badge">
+      <div class="rb-dot"></div>
+      <span>—</span>
+    </div>
+  </div>
+
+  <div class="live-badge"><div class="live-dot"></div>Live</div>
+  <div class="bus-count">Buses: <strong id="bus-count-num">0</strong></div>
+</div>
+
+<!-- ════ FOCUS DASHBOARD (same id, new structure) ════ -->
+<div id="focus-dashboard">
+  <div class="fd-header">
+    <div class="fd-icon">📍</div>
+    <div>
+      <div class="fd-title">Selected Bus</div>
+      <div class="fd-subtitle" id="fd-id">—</div>
+    </div>
+  </div>
+  <div class="fd-grid">
+    <div class="fd-stat">
+      <div class="fd-stat-label">Speed</div>
+      <div class="fd-stat-value accent" id="fd-speed">—</div>
+    </div>
+    <div class="fd-stat">
+      <div class="fd-stat-label">ETA</div>
+      <div class="fd-stat-value accent" id="fd-eta">—</div>
+    </div>
+    <div class="fd-stat">
+      <div class="fd-stat-label">Progress</div>
+      <div class="fd-stat-value green" id="fd-progress">—</div>
+    </div>
+    <div class="fd-stat">
+      <div class="fd-stat-label">Lat / Lon</div>
+      <div class="fd-stat-value" style="font-size:10px;line-height:1.5;">
+        <span id="fd-lat">—</span><br/><span id="fd-lon">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SIDEBAR (same id) ════ -->
+<div id="sidebar"></div>
+
+<!-- ════ MAP CONTROLS (new, replaces hidden leaflet zoom) ════ -->
+<div id="map-controls">
+  <div class="map-ctrl-btn" id="btn-zoom-in"  title="Zoom in">+</div>
+  <div class="map-ctrl-btn" id="btn-zoom-out" title="Zoom out">−</div>
+  <div class="ctrl-sep"></div>
+  <div class="map-ctrl-btn" id="btn-recenter" title="Re-center">⊕</div>
+</div>
+
+<!-- ════ LEGEND (same id, enhanced) ════ -->
+<div id="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#22c55e;color:#22c55e;"></div>
+    Start
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#f97316;color:#f97316;"></div>
+    Destination
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#3b82f6;color:#3b82f6;"></div>
+    Bus Stop
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#facc15;color:#facc15;"></div>
+    Bus
+  </div>
+</div>
+
+<!-- ════ TOAST (same id) ════ -->
+<div id="toast"></div>
+
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   FIREBASE CONFIG  (unchanged — your real config)
+══════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAS356fg9BKmKWzAwATu6J8u8juOsP4W3o",
+  authDomain: "bus-track-1d1a1.firebaseapp.com",
+  databaseURL: "https://bus-track-1d1a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "bus-track-1d1a1",
+  storageBucket: "bus-track-1d1a1.firebasestorage.app",
+  messagingSenderId: "870374735064",
+  appId: "1:870374735064:web:08015fda72e963fae16bad"
+};
+
+/* ══════════════════════════════════════════════════════════
+   GLOBALS  (all unchanged)
+══════════════════════════════════════════════════════════ */
+let map, routeLayer, routeCoords = [];
+let fromCoord, toCoord;
+let busMarkers     = {};
+let busData        = {};
+let lastUpdateTime = {};
+let busStops       = [];
+
+const SNAP_THRESHOLD = 0.0003;
+
+/* ══════════════════════════════════════════════════════════
+   UTILS  (all unchanged)
+══════════════════════════════════════════════════════════ */
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { from: p.get('from') || 'Chennai', to: p.get('to') || 'Vellore' };
+}
+
+function haversine(a, b) {
+  const R = 6371;
+  const dLat = (b[0]-a[0]) * Math.PI/180;
+  const dLon = (b[1]-a[1]) * Math.PI/180;
+  const s = Math.sin(dLat/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+
+function bearing(a, b) {
+  const dLon = (b[1]-a[1]) * Math.PI/180;
+  const lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
+  const y = Math.sin(dLon)*Math.cos(lat2);
+  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+  return ((Math.atan2(y,x)*180/Math.PI)+360)%360;
+}
+
+function lerp(a, b, t)   { return a + (b-a)*t; }
+function easeInOut(t)     { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
+
+function formatEta(etaMinutes) {
+  if (etaMinutes == null) return 'calculating…';
+  const totalSec = Math.round(etaMinutes * 60);
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${mins}m ${secs}s`;
+}
+
+function setLoadProgress(pct, text) {
+  document.getElementById('load-bar').style.width = pct + '%';
+  document.getElementById('load-status').textContent = text;
+}
+
+let toastTimer;
+function showToast(msg, duration=3000) {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+/* ══════════════════════════════════════════════════════════
+   GEOCODING  (unchanged)
+══════════════════════════════════════════════════════════ */
+async function geocode(place) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const data = await res.json();
+  if (!data.length) throw new Error(`Cannot find: ${place}`);
+  return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+}
+
+/* ══════════════════════════════════════════════════════════
+   ROUTING VIA OSRM  (unchanged)
+══════════════════════════════════════════════════════════ */
+async function getRoute(from, to) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&steps=true`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.code !== 'Ok') throw new Error('Route not found');
+  const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  return {
+    coords,
+    distance: data.routes[0].distance / 1000,
+    duration: data.routes[0].duration / 60
+  };
+}
+
+/* ══════════════════════════════════════════════════════════
+   SNAP & PROGRESS  (unchanged)
+══════════════════════════════════════════════════════════ */
+function snapToRoute(lat, lon) {
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < routeCoords.length; i++) {
+    const d = Math.abs(routeCoords[i][0]-lat) + Math.abs(routeCoords[i][1]-lon);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  if (bestDist < SNAP_THRESHOLD) return { pos: routeCoords[best], idx: best };
+  return { pos: [lat, lon], idx: best };
+}
+
+function getRouteProgress(idx) {
+  return routeCoords.length ? idx / (routeCoords.length - 1) : 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STOPS  (unchanged)
+══════════════════════════════════════════════════════════ */
+function generateStops(coords, count=6) {
+  const stops = [];
+  const step = Math.floor(coords.length / (count + 1));
+  for (let i = 1; i <= count; i++) {
+    const idx = i * step;
+    if (idx < coords.length) {
+      stops.push({ lat: coords[idx][0], lon: coords[idx][1], name: `Stop ${i}`, idx });
+    }
+  }
+  return stops;
+}
+
+function getNextStop(busIdx) {
+  for (const s of busStops) {
+    if (s.idx > busIdx) return s;
+  }
+  return null;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ICONS  (enhanced visuals, same function names)
+══════════════════════════════════════════════════════════ */
+function makeEndpointIcon(color, emoji) {
+  return L.divIcon({
+    html: `<div style="
+      background:${color};
+      border-radius:50%;
+      width:38px;height:38px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:17px;
+      box-shadow: 0 0 0 5px ${color}28, 0 0 0 2px white, 0 6px 20px rgba(0,0,0,0.5);
+      border:2px solid rgba(255,255,255,0.9);
+      animation: markerPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    ">${emoji}</div>`,
+    className: '',
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -22]
+  });
+}
+
+function makeStopIcon() {
+  return L.divIcon({
+    html: `<div style="
+      background:#3b82f6;
+      border-radius:50%;
+      width:13px;height:13px;
+      border:2px solid rgba(255,255,255,0.9);
+      box-shadow:0 0 0 3px rgba(59,130,246,0.25), 0 2px 8px rgba(0,0,0,0.4);
+    "></div>`,
+    className: '',
+    iconSize: [13, 13],
+    iconAnchor: [6, 6],
+    popupAnchor: [0, -9]
+  });
+}
+
+function makeBusIcon(heading) {
+  return L.divIcon({
+    html: `
+      <div style="
+        width:48px;height:48px;
+        display:flex;align-items:center;justify-content:center;
+        filter:drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 8px rgba(250,204,21,0.4));
+      ">
+        <div style="transform:rotate(${heading}deg);transform-origin:center;width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- outer glow ring -->
+            <circle cx="24" cy="24" r="22" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.3)" stroke-width="1"/>
+            <!-- main body -->
+            <circle cx="24" cy="24" r="19" fill="#facc15" stroke="white" stroke-width="2.5"/>
+            <!-- bus body -->
+            <rect x="13" y="15" width="22" height="14" rx="3.5" fill="#1e293b"/>
+            <!-- windshields -->
+            <rect x="15" y="17" width="7" height="6" rx="1.5" fill="#7dd3fc" opacity="0.9"/>
+            <rect x="26" y="17" width="7" height="6" rx="1.5" fill="#7dd3fc" opacity="0.9"/>
+            <!-- center pillar -->
+            <rect x="22" y="17" width="4" height="6" rx="1" fill="#0f172a"/>
+            <!-- undercarriage strip -->
+            <rect x="13" y="27" width="22" height="2" rx="1" fill="#0f172a"/>
+            <!-- wheels -->
+            <circle cx="17" cy="32" r="3" fill="#0f172a" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+            <circle cx="31" cy="32" r="3" fill="#0f172a" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+            <!-- direction arrow (north) -->
+            <polygon points="24,7 20.5,13 27.5,13" fill="#f97316" opacity="0.95"/>
+          </svg>
+        </div>
+      </div>`,
+    className: '',
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -28]
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   SMOOTH ANIMATION  (same logic, same 1800ms duration)
+══════════════════════════════════════════════════════════ */
+function animateBus(busId, toLat, toLon) {
+  const bm = busMarkers[busId];
+  if (!bm) return;
+
+  const { pos: snappedTo } = snapToRoute(toLat, toLon);
+  const fromPos = bm.currentPos ? [...bm.currentPos] : [...snappedTo];
+
+  const distMoved = haversine(fromPos, snappedTo);
+  const hdg = distMoved > 0.001 ? bearing(fromPos, snappedTo) : bm.heading;
+  bm.heading = hdg;
+
+  if (bm.animFrame) cancelAnimationFrame(bm.animFrame);
+
+  const ANIM_DURATION = 1800;
+  const startTime = performance.now();
+
+  function frame(now) {
+    const t    = Math.min((now - startTime) / ANIM_DURATION, 1);
+    const ease = easeInOut(t);
+    const lat  = lerp(fromPos[0], snappedTo[0], ease);
+    const lon  = lerp(fromPos[1], snappedTo[1], ease);
+    bm.marker.setLatLng([lat, lon]);
+    bm.marker.setIcon(makeBusIcon(hdg));
+    if (t < 1) {
+      bm.animFrame = requestAnimationFrame(frame);
+    } else {
+      bm.currentPos = [...snappedTo];
+      bm.animFrame  = null;
+    }
+  }
+  bm.animFrame = requestAnimationFrame(frame);
+}
+
+/* ══════════════════════════════════════════════════════════
+   FOCUS DASHBOARD UPDATE  (same function, new element layout)
+══════════════════════════════════════════════════════════ */
+function updateFocusDashboard(busId, data) {
+  document.getElementById("fd-id").textContent       = busId.toUpperCase();
+  document.getElementById("fd-speed").textContent    = Math.round(data.speed || 0) + " km/h";
+  document.getElementById("fd-eta").textContent      = formatEta(data.eta);
+  document.getElementById("fd-progress").textContent = Math.round((data.progress || 0) * 100) + "%";
+  document.getElementById("fd-lat").textContent      = (data.lat || 0).toFixed(4);
+  document.getElementById("fd-lon").textContent      = (data.lon || 0).toFixed(4);
+}
+
+/* ══════════════════════════════════════════════════════════
+   BUS CARD  (same function, enhanced HTML)
+══════════════════════════════════════════════════════════ */
+function createOrUpdateBusCard(busId, data) {
+  const sidebar = document.getElementById('sidebar');
+  let card = document.getElementById(`card-${busId}`);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'bus-card';
+    card.id = `card-${busId}`;
+    sidebar.appendChild(card);
+    // pan map to bus on card click
+    card.addEventListener('click', () => {
+      if (busMarkers[busId]) {
+        map.panTo(busMarkers[busId].marker.getLatLng(), { animate: true, duration: 0.6 });
+      }
+      updateFocusDashboard(busId, busData[busId] || data);
+    });
+  }
+
+  const nextStop  = getNextStop(data.routeIdx || 0);
+  const progress  = data.progress != null ? Math.round(data.progress * 100) : 0;
+
+  card.innerHTML = `
+    <div class="bus-card-header">
+      <div class="bus-name">
+        <div class="bus-status-dot"></div>
+        ${busId.toUpperCase()}
+      </div>
+      <div class="speed-badge">${Math.round(data.speed || 0)} km/h</div>
+    </div>
+    <div class="bus-meta">
+      <div class="meta-item">
+        <div class="meta-label">ETA</div>
+        <div class="meta-value orange">${formatEta(data.eta)}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Progress</div>
+        <div class="meta-value green">${progress}%</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Lat</div>
+        <div class="meta-value">${(data.lat||0).toFixed(4)}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Lon</div>
+        <div class="meta-value">${(data.lon||0).toFixed(4)}</div>
+      </div>
+    </div>
+    <div class="bus-progress-wrap">
+      <div class="bus-progress-meta">
+        <span>Route progress</span><span>${progress}%</span>
+      </div>
+      <div class="bus-progress-track">
+        <div class="bus-progress-fill" style="width:${progress}%"></div>
+      </div>
+    </div>
+    ${nextStop
+      ? `<div class="next-stop">
+           <div class="next-stop-label">Next Stop</div>
+           🚏 ${nextStop.name} · ~${Math.round(haversine([data.lat,data.lon],[nextStop.lat,nextStop.lon])*60/Math.max(data.speed||30,5))} min
+         </div>`
+      : `<div class="next-stop dest">
+           🏁 Approaching destination
+         </div>`
+    }
+  `;
+
+  updateFocusDashboard(busId, data);
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROCESS FIREBASE UPDATE  (unchanged logic)
+══════════════════════════════════════════════════════════ */
+function processBusUpdate(busId, rawLat, rawLon) {
+  const { pos: snapped, idx: routeIdx } = snapToRoute(rawLat, rawLon);
+  const [lat, lon] = snapped;
+  const now  = Date.now();
+  const prev = busData[busId];
+
+  let speed = 0;
+  if (prev && prev.lat != null && lastUpdateTime[busId]) {
+    const dtSec = (now - lastUpdateTime[busId]) / 1000;
+    if (dtSec > 0 && dtSec < 60) {
+      const distKm = haversine([prev.lat, prev.lon], [lat, lon]);
+      speed = Math.min((distKm / dtSec) * 3600, 120);
+    } else {
+      speed = prev.speed || 0;
+    }
+  }
+  if (prev && prev.speed) { speed = prev.speed * 0.8 + speed * 0.2; }
+
+  lastUpdateTime[busId] = now;
+
+  const progress = getRouteProgress(routeIdx);
+
+  let remainingKm = 0;
+  for (let i = routeIdx; i < routeCoords.length - 1; i++) {
+    remainingKm += haversine(routeCoords[i], routeCoords[i+1]);
+  }
+  const eta = speed > 1 ? (remainingKm / speed) * 60 : null;
+
+  busData[busId] = { lat, lon, speed, progress, eta, routeIdx };
+
+  if (!busMarkers[busId]) {
+    const marker = L.marker([lat, lon], { icon: makeBusIcon(0), zIndexOffset: 1000 }).addTo(map);
+    marker.bindPopup('');
+    busMarkers[busId] = { marker, heading: 0, currentPos: [lat, lon], animFrame: null };
+  }
+
+  animateBus(busId, lat, lon);
+
+  const nextStop = getNextStop(routeIdx);
+  busMarkers[busId].marker.setPopupContent(`
+    <div style="font-family:'DM Sans',sans-serif;font-size:12px;min-width:160px;padding:4px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px;">
+        🚌 ${busId.toUpperCase()}
+      </div>
+      <div style="color:#64748b;margin-bottom:2px;">Speed: <b style="color:#f97316">${Math.round(speed)} km/h</b></div>
+      <div style="color:#64748b;margin-bottom:2px;">Progress: <b style="color:#22c55e">${Math.round(progress*100)}%</b></div>
+      <div style="color:#64748b;margin-bottom:2px;">ETA: <b>${formatEta(eta)}</b></div>
+      ${nextStop
+        ? `<div style="color:#64748b;">Next: <b>${nextStop.name}</b></div>`
+        : `<div style="color:#22c55e;">Approaching destination</div>`
+      }
+    </div>
+  `);
+
+  createOrUpdateBusCard(busId, busData[busId]);
+  document.getElementById('bus-count-num').textContent = Object.keys(busMarkers).length;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLEANUP  (unchanged)
+══════════════════════════════════════════════════════════ */
+function removeStaleMarkers(activeBusIds) {
+  Object.keys(busMarkers).forEach(busId => {
+    if (!activeBusIds.has(busId)) {
+      if (busMarkers[busId].animFrame) cancelAnimationFrame(busMarkers[busId].animFrame);
+      busMarkers[busId].marker.remove();
+      delete busMarkers[busId];
+      delete busData[busId];
+      delete lastUpdateTime[busId];
+      const card = document.getElementById(`card-${busId}`);
+      if (card) card.remove();
+    }
+  });
+  document.getElementById('bus-count-num').textContent = Object.keys(busMarkers).length;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FIREBASE  (unchanged — only real GPS, no simulation)
+══════════════════════════════════════════════════════════ */
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    db.ref('location').on('value', snapshot => {
+      const data = snapshot.val();
+      const activeBusIds = new Set();
+
+      if (data) {
+        Object.keys(data).forEach(busId => {
+          const d = data[busId];
+          if (d && d.lat != null && d.lon != null) {
+            activeBusIds.add(busId);
+            processBusUpdate(busId, parseFloat(d.lat), parseFloat(d.lon));
+          }
+        });
+      }
+
+      removeStaleMarkers(activeBusIds);
+    }, error => {
+      console.error('Firebase read error:', error);
+      showToast('⚠ Firebase read error — check rules');
+    });
+
+    db.ref('.info/connected').on('value', snap => {
+      const connected = snap.val();
+      const liveBadge = document.querySelector('.live-badge');
+      if (liveBadge) liveBadge.style.opacity = connected ? '1' : '0.5';
+      if (!connected) showToast('⚠ Reconnecting to Firebase…');
+    });
+
+    showToast('Connected to Firebase ✓');
+  } catch (e) {
+    console.error('Firebase init error:', e);
+    showToast('⚠ Firebase connection failed: ' + e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN INIT  (same flow, +map controls wiring)
+══════════════════════════════════════════════════════════ */
+async function init() {
+  const { from, to } = getParams();
+
+  // Update both badges (inner span for text, keep dot)
+  document.getElementById('from-badge').querySelector('span').textContent = from;
+  document.getElementById('to-badge').querySelector('span').textContent   = to;
+
+  setLoadProgress(10, 'Initializing map…');
+  map = L.map('map', { zoomControl: false, attributionControl: true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Wire up our custom map control buttons
+  document.getElementById('btn-zoom-in').addEventListener('click',  () => map.zoomIn());
+  document.getElementById('btn-zoom-out').addEventListener('click', () => map.zoomOut());
+  document.getElementById('btn-recenter').addEventListener('click', () => {
+    const positions = Object.values(busMarkers).map(b => b.marker.getLatLng());
+    if (positions.length === 1) map.panTo(positions[0], { animate: true });
+    else if (positions.length > 1) map.fitBounds(positions, { padding: [60, 60], animate: true });
+    else if (routeLayer) map.fitBounds(routeLayer.getBounds(), { padding: [80, 80], animate: true });
+  });
+
+  setLoadProgress(25, `Locating ${from}…`);
+  try { fromCoord = await geocode(from); }
+  catch(e) { showToast('⚠ ' + e.message); setLoadProgress(100, 'Error'); return; }
+
+  setLoadProgress(45, `Locating ${to}…`);
+  try { toCoord = await geocode(to); }
+  catch(e) { showToast('⚠ ' + e.message); setLoadProgress(100, 'Error'); return; }
+
+  setLoadProgress(65, 'Calculating route…');
+  let routeData;
+  try { routeData = await getRoute(fromCoord, toCoord); }
+  catch(e) { showToast('⚠ Route failed'); setLoadProgress(100, 'Error'); return; }
+  routeCoords = routeData.coords;
+
+  setLoadProgress(80, 'Drawing route…');
+
+  /* Route line — glow effect (two layers, same as before) */
+  L.polyline(routeCoords, {
+    color: '#f9731633', weight: 16, opacity: 0.5, lineJoin: 'round', lineCap: 'round'
+  }).addTo(map);
+  L.polyline(routeCoords, {
+    color: '#f97316', weight: 4.5, opacity: 0.9, lineJoin: 'round', lineCap: 'round'
+  }).addTo(map);
+
+  /* Endpoint markers */
+  L.marker(fromCoord, { icon: makeEndpointIcon('#22c55e', '🟢'), zIndexOffset: 900 })
+    .addTo(map).bindPopup(`<b>Start:</b> ${from}`);
+  L.marker(toCoord, { icon: makeEndpointIcon('#f97316', '🏁'), zIndexOffset: 900 })
+    .addTo(map).bindPopup(`<b>Destination:</b> ${to}`);
+
+  setLoadProgress(90, 'Generating bus stops…');
+  busStops = generateStops(routeCoords, 6);
+  busStops.forEach(s => {
+    L.marker([s.lat, s.lon], { icon: makeStopIcon() })
+      .addTo(map)
+      .bindPopup(`<div style="font-family:'DM Sans',sans-serif;font-size:12px;">
+        <b>🚏 ${s.name}</b><br/>Route: ${Math.round((s.idx/routeCoords.length)*100)}% completed
+      </div>`);
+  });
+
+  routeLayer = L.polyline(routeCoords);  // for fitBounds reference
+  map.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [80, 80] });
+
+  showToast(`Route loaded · ${routeData.distance.toFixed(1)} km · ~${Math.round(routeData.duration)} min`);
+
+  setLoadProgress(100, 'Ready!');
+  setTimeout(() => {
+    const lo = document.getElementById('loading');
+    lo.style.opacity = '0';
+    setTimeout(() => lo.style.display = 'none', 500);
+  }, 400);
+
+  initFirebase();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>
