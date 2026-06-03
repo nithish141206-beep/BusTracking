@@ -31,6 +31,8 @@
       --green:    #22c55e;
       --red:      #ef4444;
       --yellow:   #facc15;
+      --cyan:     #06b6d4;
+      --purple:   #a855f7;
       --text:     #f1f5f9;
       --muted:    #94a3b8;
       --faint:    #4b5768;
@@ -38,7 +40,7 @@
       --border-hi:  rgba(255,255,255,0.11);
       --border-med: rgba(255,255,255,0.08);
       --topbar-h: 60px;
-      --panel-w:  320px;
+      --panel-w:  340px;
     }
 
     html, body {
@@ -214,7 +216,6 @@
 
     /* ══════════════════════════════════════════════════════
        FLOATING BUS ICON RAIL (right side)
-       The vertical stack of clickable bus icons
     ══════════════════════════════════════════════════════ */
     #bus-rail {
       position: absolute;
@@ -226,7 +227,6 @@
       gap: 12px; align-items: center;
     }
 
-    /* Each bus icon button */
     .bus-icon-btn {
       position: relative;
       display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -236,7 +236,6 @@
     .bus-icon-btn:hover { transform: translateX(-4px) scale(1.06); }
     .bus-icon-btn.active { transform: translateX(-6px) scale(1.08); }
 
-    /* The circular glass disc */
     .bus-icon-disc {
       width: 52px; height: 52px;
       border-radius: 50%;
@@ -245,8 +244,7 @@
       display: flex; align-items: center; justify-content: center;
       position: relative;
       transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5),
-                  0 0 0 0 transparent;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 0 transparent;
       overflow: visible;
     }
     .bus-icon-btn:hover .bus-icon-disc,
@@ -257,7 +255,6 @@
                   0 0 0 4px rgba(249,115,22,0.08);
       background: rgba(249,115,22,0.08);
     }
-    /* Demo bus gets blue glow */
     .bus-icon-btn.demo:hover .bus-icon-disc,
     .bus-icon-btn.demo.active .bus-icon-disc {
       border-color: rgba(59,130,246,0.55);
@@ -266,14 +263,17 @@
                   0 0 0 4px rgba(59,130,246,0.1);
       background: rgba(59,130,246,0.08);
     }
-
-    /* Bus emoji inside disc */
-    .bus-icon-disc span {
-      font-size: 22px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    .bus-icon-btn.ev:hover .bus-icon-disc,
+    .bus-icon-btn.ev.active .bus-icon-disc {
+      border-color: rgba(6,182,212,0.55);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.6),
+                  0 0 20px rgba(6,182,212,0.25),
+                  0 0 0 4px rgba(6,182,212,0.1);
+      background: rgba(6,182,212,0.08);
     }
 
-    /* Online indicator dot on disc */
+    .bus-icon-disc span { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
     .bus-online-dot {
       position: absolute; top: 2px; right: 2px;
       width: 10px; height: 10px; border-radius: 50%;
@@ -287,8 +287,12 @@
       box-shadow: 0 0 6px var(--red);
       animation: none; opacity: 0.8;
     }
+    .bus-online-dot.offline {
+      background: var(--faint);
+      box-shadow: none;
+      animation: none; opacity: 0.5;
+    }
 
-    /* Label below icon */
     .bus-icon-label {
       font-family: 'Syne', sans-serif;
       font-size: 9px; font-weight: 700;
@@ -301,8 +305,9 @@
     .bus-icon-btn.active .bus-icon-label { color: var(--accent); }
     .bus-icon-btn.demo:hover .bus-icon-label,
     .bus-icon-btn.demo.active .bus-icon-label { color: var(--blue2); }
+    .bus-icon-btn.ev:hover .bus-icon-label,
+    .bus-icon-btn.ev.active .bus-icon-label { color: var(--cyan); }
 
-    /* REAL / DEMO badge on icon */
     .bus-icon-type {
       font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
       text-transform: uppercase; padding: 1px 5px;
@@ -318,24 +323,28 @@
       border: 1px solid rgba(59,130,246,0.3);
       color: var(--blue2);
     }
+    .bus-icon-type.ev {
+      background: rgba(6,182,212,0.15);
+      border: 1px solid rgba(6,182,212,0.3);
+      color: var(--cyan);
+    }
 
     /* ══════════════════════════════════════════════════════
-       DETAILS PANEL (slides in from right when bus clicked)
+       DETAILS PANEL
     ══════════════════════════════════════════════════════ */
     #details-panel {
       position: absolute;
       top: calc(var(--topbar-h) + 12px);
-      right: -380px; /* hidden off-screen */
+      right: -400px;
       bottom: 14px;
       width: var(--panel-w);
       z-index: 950;
-      transition: right 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.3s ease;
+      transition: right 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
       opacity: 0;
       pointer-events: none;
     }
     #details-panel.open {
-      right: 80px; /* clears bus rail (52px disc + 14px margin + buffer) */
+      right: 82px;
       opacity: 1;
       pointer-events: auto;
     }
@@ -349,12 +358,9 @@
       border-radius: 18px;
       display: flex; flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.75),
-                  -4px 0 40px rgba(0,0,0,0.4);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.75), -4px 0 40px rgba(0,0,0,0.4);
       position: relative;
     }
-
-    /* Accent stripe at top */
     .dp-card::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -364,8 +370,9 @@
     .dp-card.demo::before {
       background: linear-gradient(90deg, var(--blue), #1d4ed8, transparent);
     }
-
-    /* Subtle glow bg */
+    .dp-card.ev::before {
+      background: linear-gradient(90deg, var(--cyan), #0891b2, transparent);
+    }
     .dp-card::after {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -375,8 +382,11 @@
     .dp-card.demo::after {
       background: radial-gradient(ellipse at top, rgba(59,130,246,0.05), transparent 60%);
     }
+    .dp-card.ev::after {
+      background: radial-gradient(ellipse at top, rgba(6,182,212,0.05), transparent 60%);
+    }
 
-    /* ── Panel Header ── */
+    /* Panel Header */
     .dp-header {
       padding: 16px 16px 14px;
       border-bottom: 1px solid var(--border);
@@ -385,7 +395,6 @@
     }
     .dp-header-left { display: flex; align-items: center; gap: 12px; }
 
-    /* Big circular bus avatar */
     .dp-bus-avatar {
       width: 56px; height: 56px; border-radius: 50%;
       background: rgba(249,115,22,0.1);
@@ -400,6 +409,11 @@
       border-color: rgba(59,130,246,0.3);
       box-shadow: 0 0 20px rgba(59,130,246,0.2);
     }
+    .dp-bus-avatar.ev {
+      background: rgba(6,182,212,0.1);
+      border-color: rgba(6,182,212,0.3);
+      box-shadow: 0 0 20px rgba(6,182,212,0.2);
+    }
     .dp-avatar-online {
       position: absolute; bottom: 1px; right: 1px;
       width: 12px; height: 12px; border-radius: 50%;
@@ -408,45 +422,44 @@
       animation: livePulse 2s ease-in-out infinite;
     }
     .dp-avatar-online.stopped {
-      background: var(--red);
-      box-shadow: 0 0 6px var(--red);
-      animation: none;
+      background: var(--red); box-shadow: 0 0 6px var(--red); animation: none;
+    }
+    .dp-avatar-online.offline {
+      background: var(--faint); box-shadow: none; animation: none;
     }
 
-     
     .dp-bus-name {
       font-family: 'Syne', sans-serif;
       font-weight: 800; font-size: 15px; color: var(--text);
       letter-spacing: -0.2px;
     }
-    .dp-bus-badges { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+    .dp-bus-route-tag {
+      font-size: 10px; color: var(--faint); margin-top: 2px;
+    }
+    .dp-bus-badges { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
     .dp-badge {
       font-size: 9px; font-weight: 700; letter-spacing: 0.6px;
-      text-transform: uppercase; padding: 2px 8px;
-      border-radius: 6px;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 6px;
     }
     .dp-badge.real {
-      background: rgba(249,115,22,0.12);
-      border: 1px solid rgba(249,115,22,0.25);
-      color: var(--accent);
+      background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.25); color: var(--accent);
     }
     .dp-badge.demo {
-      background: rgba(59,130,246,0.12);
-      border: 1px solid rgba(59,130,246,0.25);
-      color: var(--blue2);
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: var(--blue2);
+    }
+    .dp-badge.ev-badge {
+      background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.25); color: var(--cyan);
     }
     .dp-badge.status-running {
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.25);
-      color: #86efac;
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #86efac;
     }
     .dp-badge.status-stopped {
-      background: rgba(239,68,68,0.08);
-      border: 1px solid rgba(239,68,68,0.2);
-      color: #fca5a5;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5;
+    }
+    .dp-badge.status-offline {
+      background: rgba(75,87,104,0.15); border: 1px solid rgba(75,87,104,0.3); color: var(--faint);
     }
 
-    /* Close button */
     .dp-close {
       width: 30px; height: 30px;
       background: rgba(255,255,255,0.04);
@@ -462,7 +475,7 @@
       color: #f87171;
     }
 
-    /* ── Panel Body ── */
+    /* Panel Body */
     .dp-body {
       flex: 1; overflow-y: auto; padding: 14px 16px;
       position: relative; z-index: 1;
@@ -470,11 +483,9 @@
       scrollbar-color: var(--border-hi) transparent;
     }
     .dp-body::-webkit-scrollbar { width: 3px; }
-    .dp-body::-webkit-scrollbar-thumb {
-      background: var(--border-hi); border-radius: 2px;
-    }
+    .dp-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
 
-    /* ── Speed + ETA row ── */
+    /* Speed + ETA row */
     .dp-stat-row {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 8px; margin-bottom: 8px;
@@ -500,13 +511,14 @@
     .dp-stat-value.green  { color: var(--green); }
     .dp-stat-value.red    { color: #f87171; }
     .dp-stat-value.blue   { color: var(--blue2); }
+    .dp-stat-value.cyan   { color: var(--cyan); }
     .dp-stat-sub {
       font-size: 9px; color: var(--faint);
       margin-top: 3px; font-weight: 400;
       font-family: 'DM Sans', sans-serif;
     }
 
-    /* ── Coord row (lat/lon side by side) ── */
+    /* Coord row */
     .dp-coords {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 8px; margin-bottom: 8px;
@@ -526,12 +538,14 @@
       font-size: 12px; color: var(--muted); letter-spacing: 0.3px;
     }
 
-    /* ── Route Progress section ── */
+    /* Section label */
     .dp-section-label {
       font-size: 9px; color: var(--faint);
       text-transform: uppercase; letter-spacing: 0.7px;
       margin-bottom: 7px; margin-top: 10px;
     }
+
+    /* Route progress bar */
     .dp-progress-track {
       height: 6px;
       background: rgba(255,255,255,0.06);
@@ -551,7 +565,7 @@
     }
     .dp-progress-meta span { color: var(--muted); }
 
-    /* ── Engine status strip ── */
+    /* Engine status strip */
     .dp-engine-strip {
       margin-top: 10px; margin-bottom: 8px;
       padding: 9px 12px;
@@ -569,6 +583,11 @@
       border: 1px solid rgba(239,68,68,0.14);
       color: #fca5a5;
     }
+    .dp-engine-strip.offline-strip {
+      background: rgba(75,87,104,0.1);
+      border: 1px solid rgba(75,87,104,0.2);
+      color: var(--faint);
+    }
     .dp-engine-dot {
       width: 7px; height: 7px; border-radius: 50%;
       flex-shrink: 0;
@@ -581,15 +600,146 @@
     .dp-engine-strip.stopped .dp-engine-dot {
       background: var(--red); opacity: 0.7;
     }
+    .dp-engine-strip.offline-strip .dp-engine-dot {
+      background: var(--faint); opacity: 0.5;
+    }
 
-    /* ── Last updated ── */
+    /* ══════════════════════════════════════════════════════
+       SUSTAINABILITY CARD  ← NEW
+    ══════════════════════════════════════════════════════ */
+    .dp-sustain-card {
+      margin-top: 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 13px;
+      position: relative; overflow: hidden;
+    }
+    .dp-sustain-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1.5px;
+      background: linear-gradient(90deg, var(--green), var(--cyan), transparent 70%);
+    }
+    .dp-sustain-title {
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 10px; color: var(--green);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dp-sustain-title-icon {
+      width: 18px; height: 18px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 5px; display: grid; place-items: center;
+      font-size: 10px; flex-shrink: 0;
+    }
+    .dp-sustain-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .dp-sustain-row:last-child { margin-bottom: 0; }
+    .dp-sustain-key {
+      font-size: 10px; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .dp-sustain-val {
+      display: flex; align-items: center; gap: 5px;
+    }
+    .dp-fuel-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: 0.3px;
+    }
+    .dp-fuel-badge.ev {
+      background: rgba(6,182,212,0.12);
+      border: 1px solid rgba(6,182,212,0.3);
+      color: var(--cyan);
+    }
+    .dp-fuel-badge.cng {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: #86efac;
+    }
+    .dp-fuel-badge.diesel {
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.22);
+      color: var(--accent);
+    }
+    .dp-fuel-badge.petrol {
+      background: rgba(250,204,21,0.1);
+      border: 1px solid rgba(250,204,21,0.22);
+      color: var(--yellow);
+    }
+    .dp-emission-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: 0.3px;
+    }
+    .dp-emission-badge.zero {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: #86efac;
+    }
+    .dp-emission-badge.bs6 {
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.25);
+      color: var(--blue2);
+    }
+    .dp-emission-badge.bs4 {
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.22);
+      color: var(--accent);
+    }
+    .dp-emission-badge.bs3 {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: #fca5a5;
+    }
+    .dp-sustain-bar-wrap {
+      margin-top: 10px;
+    }
+    .dp-sustain-bar-label {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: var(--faint); margin-bottom: 4px;
+    }
+    .dp-sustain-bar-track {
+      height: 4px; background: rgba(255,255,255,0.05);
+      border-radius: 2px; overflow: hidden;
+    }
+    .dp-sustain-bar-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       AVAILABILITY STRIP  ← NEW
+    ══════════════════════════════════════════════════════ */
+    .dp-avail-strip {
+      margin-top: 10px; display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .dp-avail-item {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 9px; padding: 8px 6px;
+      text-align: center;
+    }
+    .dp-avail-val {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 16px; line-height: 1; margin-bottom: 3px;
+    }
+    .dp-avail-lbl {
+      font-size: 8px; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    /* Last updated */
     .dp-updated {
       font-size: 10px; color: var(--faint);
       text-align: center; margin-top: 6px;
     }
     .dp-updated span { color: var(--muted); }
 
-    /* ── Focus Map button ── */
+    /* Focus Map button */
     .dp-focus-btn {
       display: flex; align-items: center; justify-content: center; gap: 7px;
       width: 100%; padding: 11px;
@@ -617,9 +767,57 @@
       border-color: rgba(59,130,246,0.45);
       box-shadow: 0 6px 20px rgba(59,130,246,0.2);
     }
+    .dp-focus-btn.ev-btn {
+      background: rgba(6,182,212,0.1);
+      border-color: rgba(6,182,212,0.25);
+      color: var(--cyan);
+    }
+    .dp-focus-btn.ev-btn:hover {
+      background: rgba(6,182,212,0.18);
+      border-color: rgba(6,182,212,0.45);
+      box-shadow: 0 6px 20px rgba(6,182,212,0.2);
+    }
 
     /* ══════════════════════════════════════════════════════
-       OVERLAY — clicking outside closes panel
+       FLEET AVAILABILITY PANEL (top-left)  ← NEW
+    ══════════════════════════════════════════════════════ */
+    #fleet-panel {
+      position: absolute;
+      top: calc(var(--topbar-h) + 12px);
+      left: 14px;
+      z-index: 800;
+      background: var(--glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hi);
+      border-radius: 14px; padding: 12px 14px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      min-width: 170px;
+    }
+    .fleet-title {
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 9px; color: var(--faint);
+      text-transform: uppercase; letter-spacing: 0.9px;
+      margin-bottom: 9px;
+    }
+    .fleet-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px; gap: 12px;
+    }
+    .fleet-row:last-child { margin-bottom: 0; }
+    .fleet-row-left {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .fleet-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .fleet-label { font-size: 11px; color: var(--muted); }
+    .fleet-val {
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       OVERLAY
     ══════════════════════════════════════════════════════ */
     #panel-overlay {
       position: absolute; inset: 0; z-index: 940;
@@ -691,7 +889,7 @@
       opacity: 0; transform: translateY(12px); pointer-events: none;
     }
     #ds-panel.open {
-      max-height: 360px; opacity: 1;
+      max-height: 380px; opacity: 1;
       transform: translateY(0); pointer-events: auto;
     }
     #ds-panel::before {
@@ -742,7 +940,7 @@
     #ds-table { width: 100%; border-collapse: collapse; font-size: 11px; }
     #ds-table thead tr { background: rgba(249,115,22,0.06); position: sticky; top: 0; z-index: 1; }
     #ds-table thead th {
-      padding: 9px 12px; text-align: left;
+      padding: 9px 10px; text-align: left;
       font-family: 'Syne', sans-serif; font-weight: 700;
       font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase;
       color: var(--accent); border-bottom: 1px solid rgba(249,115,22,0.12);
@@ -752,7 +950,7 @@
     #ds-table tbody tr:last-child { border-bottom: none; }
     #ds-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
     #ds-table tbody tr:hover { background: rgba(249,115,22,0.04) !important; cursor: pointer; }
-    #ds-table td { padding: 9px 12px; color: #cbd5e1; white-space: nowrap; }
+    #ds-table td { padding: 8px 10px; color: #cbd5e1; white-space: nowrap; }
     .ds-bus-id-badge {
       background: rgba(249,115,22,0.08);
       border: 1px solid rgba(249,115,22,0.2);
@@ -777,6 +975,11 @@
     .ds-status.moving  .ds-status-dot { background:#22c55e; animation:livePulse 1.4s ease-in-out infinite; }
     .ds-status.stopped .ds-status-dot { background:#ef4444; }
     .ds-time { color: var(--faint); font-size:10px; }
+    /* Fuel column in table */
+    .ds-fuel-badge { display:inline-block; font-size:9px; font-weight:600; padding:1px 6px; border-radius:10px; }
+    .ds-fuel-badge.ev     { background:rgba(6,182,212,0.1);   border:1px solid rgba(6,182,212,0.25);   color:var(--cyan); }
+    .ds-fuel-badge.cng    { background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.2);   color:#86efac; }
+    .ds-fuel-badge.diesel { background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.2);  color:var(--accent); }
     #ds-empty { text-align:center; padding:24px; color:var(--faint); font-size:12px; }
 
     /* ══════════════════════════════════════════════════════
@@ -854,8 +1057,7 @@
       .route-badge { max-width: 100px; }
       .rb-dist { display: none; }
       .bus-count { display: none; }
-
-      /* Bus rail on mobile: horizontal at bottom */
+      #fleet-panel { display: none; }
       #bus-rail {
         top: auto; right: auto;
         bottom: 14px; left: 50%; transform: translateX(-50%);
@@ -863,8 +1065,6 @@
       }
       .bus-icon-btn:hover { transform: translateY(-4px) scale(1.06); }
       .bus-icon-btn.active { transform: translateY(-6px) scale(1.08); }
-
-      /* Details panel slides up from bottom on mobile */
       #details-panel {
         top: auto; right: 0; left: 0; bottom: -80vh;
         width: 100%; height: 75vh;
@@ -873,7 +1073,6 @@
       }
       #details-panel.open { bottom: 0; right: 0; opacity: 1; }
       .dp-card { border-radius: 20px 20px 0 0; }
-
       #map-controls { top: auto; bottom: 76px; right: 14px; }
       #ds-fab { display: none; }
       #legend { bottom: 76px; }
@@ -916,10 +1115,41 @@
   <div class="bus-count">Buses: <strong id="bus-count-num">0</strong></div>
 </div>
 
-<!-- ════ FLOATING BUS ICON RAIL (right side) ════ -->
-<div id="bus-rail">
-  <!-- Bus icon buttons injected dynamically by JS -->
+<!-- ════ FLEET AVAILABILITY PANEL (top-left) ════ -->
+<div id="fleet-panel">
+  <div class="fleet-title">Fleet Availability</div>
+  <div class="fleet-row">
+    <div class="fleet-row-left">
+      <div class="fleet-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;animation:livePulse 2s infinite;"></div>
+      <span class="fleet-label">Online</span>
+    </div>
+    <span class="fleet-val" id="fleet-online" style="color:#22c55e;">0</span>
+  </div>
+  <div class="fleet-row">
+    <div class="fleet-row-left">
+      <div class="fleet-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>
+      <span class="fleet-label">Stopped</span>
+    </div>
+    <span class="fleet-val" id="fleet-stopped" style="color:#f87171;">0</span>
+  </div>
+  <div class="fleet-row">
+    <div class="fleet-row-left">
+      <div class="fleet-dot" style="background:#4b5768;"></div>
+      <span class="fleet-label">Offline</span>
+    </div>
+    <span class="fleet-val" id="fleet-offline" style="color:#4b5768;">0</span>
+  </div>
+  <div class="fleet-row" style="border-top:1px solid rgba(255,255,255,0.05);padding-top:6px;margin-top:2px;">
+    <div class="fleet-row-left">
+      <div class="fleet-dot" style="background:#f97316;box-shadow:0 0 5px #f97316;"></div>
+      <span class="fleet-label">Running</span>
+    </div>
+    <span class="fleet-val" id="fleet-running" style="color:#f97316;">0</span>
+  </div>
 </div>
+
+<!-- ════ FLOATING BUS ICON RAIL (right side) ════ -->
+<div id="bus-rail"></div>
 
 <!-- ════ CLICK-OUTSIDE OVERLAY ════ -->
 <div id="panel-overlay"></div>
@@ -937,6 +1167,7 @@
         </div>
         <div class="dp-bus-info">
           <div class="dp-bus-name" id="dp-name">—</div>
+          <div class="dp-bus-route-tag" id="dp-route-tag">Route —</div>
           <div class="dp-bus-badges">
             <span class="dp-badge real" id="dp-type-badge">Real</span>
             <span class="dp-badge status-running" id="dp-status-badge">Running</span>
@@ -1007,13 +1238,57 @@
         <span id="dp-engine-text">Engine Running — Bus Moving</span>
       </div>
 
+      <!-- ══ AVAILABILITY INFO ══ -->
+      <div class="dp-section-label">Live Availability</div>
+      <div class="dp-avail-strip" id="dp-avail-strip">
+        <div class="dp-avail-item">
+          <div class="dp-avail-val" id="dp-avail-status-icon">🟢</div>
+          <div class="dp-avail-lbl" id="dp-avail-status-lbl">Online</div>
+        </div>
+        <div class="dp-avail-item">
+          <div class="dp-avail-val" id="dp-avail-motion-icon">🚀</div>
+          <div class="dp-avail-lbl" id="dp-avail-motion-lbl">Running</div>
+        </div>
+        <div class="dp-avail-item">
+          <div class="dp-avail-val" id="dp-avail-pct">0%</div>
+          <div class="dp-avail-lbl">Done</div>
+        </div>
+      </div>
+
+      <!-- ══ SUSTAINABILITY ══ -->
+      <div class="dp-sustain-card" id="dp-sustain-card">
+        <div class="dp-sustain-title">
+          <div class="dp-sustain-title-icon">🌿</div>
+          Sustainability Info
+        </div>
+        <div class="dp-sustain-row">
+          <div class="dp-sustain-key">Fuel Type</div>
+          <div class="dp-sustain-val">
+            <span class="dp-fuel-badge" id="dp-fuel-badge">—</span>
+          </div>
+        </div>
+        <div class="dp-sustain-row">
+          <div class="dp-sustain-key">Emission Standard</div>
+          <div class="dp-sustain-val">
+            <span class="dp-emission-badge" id="dp-emission-badge">—</span>
+          </div>
+        </div>
+        <div class="dp-sustain-bar-wrap" id="dp-sustain-bar-wrap">
+          <div class="dp-sustain-bar-label">
+            <span id="dp-sustain-bar-left">CO₂ Impact</span>
+            <span id="dp-sustain-bar-right">Low</span>
+          </div>
+          <div class="dp-sustain-bar-track">
+            <div class="dp-sustain-bar-fill" id="dp-sustain-bar-fill" style="width:20%;background:var(--green);"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Last updated -->
       <div class="dp-updated">Last updated: <span id="dp-last-updated">—</span></div>
 
       <!-- Focus button -->
-      <button class="dp-focus-btn" id="dp-focus-btn">
-        ⊕ Focus on Map
-      </button>
+      <button class="dp-focus-btn" id="dp-focus-btn">⊕ Focus on Map</button>
 
     </div>
   </div>
@@ -1034,7 +1309,8 @@
   <div class="legend-item"><div class="legend-dot" style="background:#f97316;color:#f97316;"></div>Destination</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;color:#3b82f6;"></div>Bus Stop</div>
   <div class="legend-item"><div class="legend-dot" style="background:#facc15;color:#facc15;"></div>Real Bus</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#93c5fd;color:#93c5fd;"></div>Demo Bus</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#93c5fd;color:#93c5fd;"></div>Demo Bus (CNG)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;color:#06b6d4;"></div>EV Bus</div>
 </div>
 
 <div id="toast"></div>
@@ -1068,12 +1344,14 @@
             <th>Latitude</th>
             <th>Longitude</th>
             <th>Speed</th>
+            <th>Fuel</th>
+            <th>Emission</th>
             <th>Status</th>
             <th>Updated</th>
           </tr>
         </thead>
         <tbody id="ds-tbody">
-          <tr><td colspan="7"><div id="ds-empty">Waiting for bus data…</div></td></tr>
+          <tr><td colspan="9"><div id="ds-empty">Waiting for bus data…</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1083,12 +1361,9 @@
 <button id="ds-fab" title="Toggle Data Sheet">📋</button>
 
 <!-- ════════════════════════════════════════════════════════
-     CORE MAP + BUS LOGIC
+     FIREBASE CONFIG
 ════════════════════════════════════════════════════════ -->
 <script>
-/* ──────────────────────────────────────────────────────
-   FIREBASE CONFIG
-────────────────────────────────────────────────────── */
 const firebaseConfig = {
   apiKey: "AIzaSyAS356fg9BKmKWzAwATu6J8u8juOsP4W3o",
   authDomain: "bus-track-1d1a1.firebaseapp.com",
@@ -1098,7 +1373,62 @@ const firebaseConfig = {
   messagingSenderId: "870374735064",
   appId: "1:870374735064:web:08015fda72e963fae16bad"
 };
+</script>
 
+<!-- ════════════════════════════════════════════════════════
+     SUSTAINABILITY DATABASE  ← NEW
+     Defines fuel type, emission standard, and CO2 impact
+     score (0–100, lower = greener) per bus ID.
+════════════════════════════════════════════════════════ -->
+<script>
+const BUS_SUSTAINABILITY = {
+  /* Real GPS buses — add more bus IDs here as needed */
+  'default': {
+    fuelType:         'Diesel',
+    fuelClass:        'diesel',
+    emissionStd:      'Bharat Stage VI',
+    emissionClass:    'bs6',
+    co2Score:         45,       /* 0=zero emission, 100=very high */
+    co2Label:         'Moderate'
+  },
+  /* Demo bus — CNG */
+  'BUS-DEMO-01': {
+    fuelType:         'CNG',
+    fuelClass:        'cng',
+    emissionStd:      'Bharat Stage VI',
+    emissionClass:    'bs6',
+    co2Score:         28,
+    co2Label:         'Low'
+  },
+  /* EV demo bus */
+  'BUS-EV-01': {
+    fuelType:         'Electric (EV)',
+    fuelClass:        'ev',
+    emissionStd:      'Zero Emission',
+    emissionClass:    'zero',
+    co2Score:         2,
+    co2Label:         'Zero'
+  }
+};
+
+function getSustainability(busId) {
+  return BUS_SUSTAINABILITY[busId] || BUS_SUSTAINABILITY['default'];
+}
+
+/* Color for CO2 bar */
+function co2BarColor(score) {
+  if (score <= 5)  return '#22c55e';
+  if (score <= 30) return '#86efac';
+  if (score <= 55) return '#facc15';
+  if (score <= 75) return '#f97316';
+  return '#ef4444';
+}
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     CORE MAP + BUS LOGIC
+════════════════════════════════════════════════════════ -->
+<script>
 /* ──────────────────────────────────────────────────────
    GLOBALS
 ────────────────────────────────────────────────────── */
@@ -1112,13 +1442,13 @@ let stopMarkers     = {};
 let routeTotalKm    = 0;
 let busRemainingKm  = {};
 
-/* Which bus is currently shown in the details panel */
 let activePanelBus  = null;
 
-/* Set of demo (simulated) bus IDs */
-const DEMO_BUS_IDS  = new Set(['BUS-DEMO-01']);
+/* Demo bus IDs and their colour class */
+const DEMO_BUS_IDS  = new Set(['BUS-DEMO-01', 'BUS-EV-01']);
+const EV_BUS_IDS    = new Set(['BUS-EV-01']);
 
-const SNAP_THRESHOLD       = 0.0003;
+const SNAP_THRESHOLD         = 0.0003;
 const SPEED_MOVING_THRESHOLD = 2;
 
 /* ──────────────────────────────────────────────────────
@@ -1150,12 +1480,15 @@ function easeInOut(t)    { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; 
 
 function isMoving(speed) { return (speed || 0) >= SPEED_MOVING_THRESHOLD; }
 
+/* ── Enhanced ETA logic ── */
 function formatEta(etaMinutes, speed) {
   if (speed != null && speed < SPEED_MOVING_THRESHOLD) return 'Bus Stopped';
-  if (etaMinutes == null || isNaN(etaMinutes)) return 'Calculating…';
+  if (speed == null) return 'ETA Calculating…';
+  if (etaMinutes == null || isNaN(etaMinutes)) return 'ETA Calculating…';
   const totalSec = Math.round(etaMinutes * 60);
   const mins = Math.floor(totalSec / 60);
   const secs = totalSec % 60;
+  if (mins > 120) return `~${Math.round(mins/60)}h ${mins%60}m`;
   return `${mins}m ${secs}s`;
 }
 
@@ -1201,6 +1534,23 @@ function updateTopbarDistance(busId, remainingKm) {
     distEl.textContent = next;
     distEl.classList.add('updating');
   }
+}
+
+/* ── Fleet availability counter ── */
+function updateFleetPanel() {
+  const ids = Object.keys(busData);
+  let online = 0, stopped = 0, running = 0;
+  ids.forEach(id => {
+    const d = busData[id];
+    if (!d) return;
+    online++;
+    if (isMoving(d.speed)) running++; else stopped++;
+  });
+  const offline = 0; /* buses removed from stale are gone from busData */
+  document.getElementById('fleet-online').textContent  = online;
+  document.getElementById('fleet-stopped').textContent = stopped;
+  document.getElementById('fleet-offline').textContent = offline;
+  document.getElementById('fleet-running').textContent = running;
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1339,12 +1689,19 @@ function makeStopIcon() {
   });
 }
 
-function makeBusIcon(heading, isDemo=false, moving=true) {
-  const outerColor = isDemo ? '#93c5fd' : '#facc15';
-  const ringFill   = isDemo ? 'rgba(147,197,253,0.12)' : 'rgba(250,204,21,0.12)';
-  const ringColor  = isDemo ? 'rgba(147,197,253,0.3)'  : 'rgba(250,204,21,0.3)';
-  const glowOp     = moving ? '1' : '0.4';
-  const arrowOp    = moving ? '0.95' : '0.2';
+function makeBusIcon(heading, busId, moving) {
+  const isDemo = DEMO_BUS_IDS.has(busId);
+  const isEV   = EV_BUS_IDS.has(busId);
+  let outerColor, ringFill, ringColor;
+  if (isEV) {
+    outerColor = '#06b6d4'; ringFill = 'rgba(6,182,212,0.12)'; ringColor = 'rgba(6,182,212,0.3)';
+  } else if (isDemo) {
+    outerColor = '#93c5fd'; ringFill = 'rgba(147,197,253,0.12)'; ringColor = 'rgba(147,197,253,0.3)';
+  } else {
+    outerColor = '#facc15'; ringFill = 'rgba(250,204,21,0.12)'; ringColor = 'rgba(250,204,21,0.3)';
+  }
+  const glowOp  = moving ? '1' : '0.4';
+  const arrowOp = moving ? '0.95' : '0.2';
   return L.divIcon({
     html: `
       <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;
@@ -1360,7 +1717,7 @@ function makeBusIcon(heading, isDemo=false, moving=true) {
             <rect x="13" y="27" width="22" height="2" rx="1"   fill="#0f172a"/>
             <circle cx="17" cy="32" r="3" fill="#0f172a" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
             <circle cx="31" cy="32" r="3" fill="#0f172a" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-            <polygon points="24,7 20.5,13 27.5,13" fill="#f97316" opacity="${arrowOp}"/>
+            ${isEV ? `<text x="24" y="13" text-anchor="middle" font-size="5" fill="#0f172a" font-weight="bold">EV</text>` : `<polygon points="24,7 20.5,13 27.5,13" fill="#f97316" opacity="${arrowOp}"/>`}
           </svg>
         </div>
       </div>`,
@@ -1371,17 +1728,28 @@ function makeBusIcon(heading, isDemo=false, moving=true) {
 /* ──────────────────────────────────────────────────────
    BUS RAIL — floating icon buttons
 ────────────────────────────────────────────────────── */
+function busTypeClass(busId) {
+  if (EV_BUS_IDS.has(busId))   return 'ev';
+  if (DEMO_BUS_IDS.has(busId)) return 'demo';
+  return 'real';
+}
+function busTypeLabel(busId) {
+  if (EV_BUS_IDS.has(busId))   return 'EV';
+  if (DEMO_BUS_IDS.has(busId)) return 'Demo';
+  return 'Real';
+}
+
 function ensureBusRailButton(busId) {
-  const rail   = document.getElementById('bus-rail');
-  const btnId  = `rail-btn-${busId}`;
+  const rail  = document.getElementById('bus-rail');
+  const btnId = `rail-btn-${busId}`;
   if (document.getElementById(btnId)) return;
 
-  const isDemo   = DEMO_BUS_IDS.has(busId);
-  const typeClass = isDemo ? 'demo' : 'real';
-  const typeLabel = isDemo ? 'Demo' : 'Real';
+  const tc  = busTypeClass(busId);
+  const tl  = busTypeLabel(busId);
+  const isDemo = DEMO_BUS_IDS.has(busId);
 
   const btn = document.createElement('div');
-  btn.className = `bus-icon-btn${isDemo ? ' demo' : ''}`;
+  btn.className = `bus-icon-btn${isDemo ? ' ' + tc : ''}`;
   btn.id = btnId;
   btn.innerHTML = `
     <div class="bus-icon-disc">
@@ -1389,7 +1757,7 @@ function ensureBusRailButton(busId) {
       <div class="bus-online-dot" id="rail-dot-${busId}"></div>
     </div>
     <div class="bus-icon-label">${busId.replace('BUS-','')}</div>
-    <div class="bus-icon-type ${typeClass}">${typeLabel}</div>
+    <div class="bus-icon-type ${tc}">${tl}</div>
   `;
 
   btn.addEventListener('click', (e) => {
@@ -1397,7 +1765,6 @@ function ensureBusRailButton(busId) {
     openDetailsPanel(busId);
   });
 
-  // Demo buses go after real buses
   if (isDemo) rail.appendChild(btn);
   else rail.prepend(btn);
 }
@@ -1413,22 +1780,20 @@ function updateBusRailButton(busId, moving) {
 ────────────────────────────────────────────────────── */
 function openDetailsPanel(busId) {
   activePanelBus = busId;
-  const isDemo   = DEMO_BUS_IDS.has(busId);
-  const data     = busData[busId];
+  const tc   = busTypeClass(busId);
+  const data = busData[busId];
 
-  // Mark active icon
   document.querySelectorAll('.bus-icon-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById(`rail-btn-${busId}`);
   if (btn) btn.classList.add('active');
 
-  // Update card accent
   const card = document.getElementById('dp-card');
-  card.className = 'dp-card' + (isDemo ? ' demo' : '');
+  card.className = 'dp-card';
+  if (tc === 'ev')   card.classList.add('ev');
+  else if (tc === 'demo') card.classList.add('demo');
 
-  // Populate
   if (data) populatePanelData(busId, data);
 
-  // Slide in
   document.getElementById('details-panel').classList.add('open');
   document.getElementById('panel-overlay').classList.add('active');
 }
@@ -1442,73 +1807,103 @@ function closeDetailsPanel() {
 
 function populatePanelData(busId, data) {
   if (!data) return;
+  const tc      = busTypeClass(busId);
+  const isEV    = EV_BUS_IDS.has(busId);
   const isDemo  = DEMO_BUS_IDS.has(busId);
   const moving  = isMoving(data.speed);
   const pct     = Math.round((data.progress || 0) * 100);
+  const sustain = getSustainability(busId);
 
-  // Avatar
+  /* Avatar */
   const avatar = document.getElementById('dp-avatar');
-  avatar.className = 'dp-bus-avatar' + (isDemo ? ' demo' : '');
-  document.getElementById('dp-avatar-online').className =
-    'dp-avatar-online' + (moving ? '' : ' stopped');
+  avatar.className = 'dp-bus-avatar';
+  if (isEV)        avatar.classList.add('ev');
+  else if (isDemo) avatar.classList.add('demo');
 
-  // Name + badges
+  const avOnline = document.getElementById('dp-avatar-online');
+  avOnline.className = 'dp-avatar-online' + (moving ? '' : ' stopped');
+
+  /* Name + route tag */
   document.getElementById('dp-name').textContent = busId.toUpperCase();
-  const typeBadge = document.getElementById('dp-type-badge');
-  typeBadge.textContent = isDemo ? 'Demo' : 'Real';
-  typeBadge.className   = 'dp-badge ' + (isDemo ? 'demo' : 'real');
+  document.getElementById('dp-route-tag').textContent = `Route: ${fromName || '—'} → ${toName || '—'}`;
 
+  /* Type badge */
+  const typeBadge = document.getElementById('dp-type-badge');
+  typeBadge.textContent = busTypeLabel(busId);
+  typeBadge.className   = 'dp-badge ' + (isEV ? 'ev-badge' : (isDemo ? 'demo' : 'real'));
+
+  /* Status badge */
   const statusBadge = document.getElementById('dp-status-badge');
   statusBadge.textContent = moving ? 'Running' : 'Stopped';
   statusBadge.className   = 'dp-badge ' + (moving ? 'status-running' : 'status-stopped');
 
-  // Stats
-  document.getElementById('dp-speed').textContent =
-    Math.round(data.speed || 0) + ' km/h';
-  document.getElementById('dp-speed').className =
-    'dp-stat-value ' + (moving ? 'accent' : 'red');
+  /* Speed */
+  const speedEl = document.getElementById('dp-speed');
+  speedEl.textContent = Math.round(data.speed || 0) + ' km/h';
+  speedEl.className   = 'dp-stat-value ' + (moving ? (isEV ? 'cyan' : 'accent') : 'red');
 
+  /* ETA — enhanced */
   const etaEl = document.getElementById('dp-eta');
   etaEl.textContent = formatEta(data.eta, data.speed);
-  etaEl.className   = 'dp-stat-value ' + (moving ? 'accent' : 'red');
+  etaEl.className   = 'dp-stat-value ' + (moving ? (isEV ? 'cyan' : 'accent') : 'red');
 
+  /* Remaining + progress */
   const rem = data.remainingKm != null ? data.remainingKm.toFixed(1) + ' km' : '—';
   document.getElementById('dp-remaining').textContent    = rem;
   document.getElementById('dp-progress-val').textContent = pct + '%';
 
-  // Coordinates
-  document.getElementById('dp-lat').textContent =
-    data.lat != null ? data.lat.toFixed(6) : '—';
-  document.getElementById('dp-lon').textContent =
-    data.lon != null ? data.lon.toFixed(6) : '—';
+  /* Coords */
+  document.getElementById('dp-lat').textContent = data.lat != null ? data.lat.toFixed(6) : '—';
+  document.getElementById('dp-lon').textContent = data.lon != null ? data.lon.toFixed(6) : '—';
 
-  // Route origin/dest labels
+  /* Route labels */
   document.getElementById('dp-from-label').textContent = fromName || 'Origin';
   document.getElementById('dp-to-label').textContent   = toName || 'Destination';
 
-  // Progress bar
+  /* Progress bar */
   document.getElementById('dp-progress-bar').style.width = pct + '%';
   document.getElementById('dp-progress-pct').textContent = pct + '%';
 
-  // Engine strip
-  const strip = document.getElementById('dp-engine-strip');
+  /* Engine strip */
+  const strip   = document.getElementById('dp-engine-strip');
   const engText = document.getElementById('dp-engine-text');
   strip.className = 'dp-engine-strip ' + (moving ? 'running' : 'stopped');
   engText.textContent = moving
     ? `Engine Running — Bus Moving at ${Math.round(data.speed||0)} km/h`
     : 'Engine Idle — Bus Stopped';
 
-  // Last updated
-  const lu = lastUpdateTime[busId];
-  document.getElementById('dp-last-updated').textContent = lu
-    ? new Date(lu).toLocaleTimeString() : '—';
+  /* ── Availability info ── */
+  document.getElementById('dp-avail-status-icon').textContent = moving ? '🟢' : '🔴';
+  document.getElementById('dp-avail-status-lbl').textContent  = 'Online';
+  document.getElementById('dp-avail-motion-icon').textContent = moving ? '🚀' : '⛔';
+  document.getElementById('dp-avail-motion-lbl').textContent  = moving ? 'Running' : 'Stopped';
+  document.getElementById('dp-avail-pct').textContent         = pct + '%';
 
-  // Focus button style
+  /* ── Sustainability ── */
+  const fuelBadge = document.getElementById('dp-fuel-badge');
+  fuelBadge.textContent = sustain.fuelType;
+  fuelBadge.className   = 'dp-fuel-badge ' + sustain.fuelClass;
+
+  const emBadge = document.getElementById('dp-emission-badge');
+  emBadge.textContent = sustain.emissionStd;
+  emBadge.className   = 'dp-emission-badge ' + sustain.emissionClass;
+
+  const barFill = document.getElementById('dp-sustain-bar-fill');
+  barFill.style.width      = sustain.co2Score + '%';
+  barFill.style.background = co2BarColor(sustain.co2Score);
+  document.getElementById('dp-sustain-bar-right').textContent = sustain.co2Label;
+
+  /* Last updated */
+  const lu = lastUpdateTime[busId];
+  document.getElementById('dp-last-updated').textContent = lu ? new Date(lu).toLocaleTimeString() : '—';
+
+  /* Focus button */
   const focusBtn = document.getElementById('dp-focus-btn');
-  focusBtn.className = 'dp-focus-btn' + (isDemo ? ' demo' : '');
+  focusBtn.className = 'dp-focus-btn';
+  if (isEV)        focusBtn.classList.add('ev-btn');
+  else if (isDemo) focusBtn.classList.add('demo');
 }
 
-/* Refresh panel if open */
 function refreshOpenPanel(busId) {
   if (activePanelBus === busId && busData[busId]) {
     populatePanelData(busId, busData[busId]);
@@ -1521,7 +1916,6 @@ function refreshOpenPanel(busId) {
 function animateBus(busId, toLat, toLon) {
   const bm     = busMarkers[busId];
   if (!bm) return;
-  const isDemo = DEMO_BUS_IDS.has(busId);
   const moving = isMoving(busData[busId]?.speed);
 
   const { pos: snappedTo } = snapToRoute(toLat, toLon);
@@ -1533,7 +1927,7 @@ function animateBus(busId, toLat, toLon) {
   if (bm.animFrame) cancelAnimationFrame(bm.animFrame);
 
   if (!moving) {
-    bm.marker.setIcon(makeBusIcon(hdg, isDemo, false));
+    bm.marker.setIcon(makeBusIcon(hdg, busId, false));
     bm.currentPos = [...snappedTo];
     return;
   }
@@ -1547,7 +1941,7 @@ function animateBus(busId, toLat, toLon) {
     const lat  = lerp(fromPos[0], snappedTo[0], ease);
     const lon  = lerp(fromPos[1], snappedTo[1], ease);
     bm.marker.setLatLng([lat, lon]);
-    bm.marker.setIcon(makeBusIcon(hdg, isDemo, true));
+    bm.marker.setIcon(makeBusIcon(hdg, busId, true));
     if (t < 1) { bm.animFrame = requestAnimationFrame(frame); }
     else { bm.currentPos = [...snappedTo]; bm.animFrame = null; }
   }
@@ -1555,17 +1949,18 @@ function animateBus(busId, toLat, toLon) {
 }
 
 /* ──────────────────────────────────────────────────────
-   PROCESS BUS UPDATE  (main entry for each GPS update)
+   PROCESS BUS UPDATE
 ────────────────────────────────────────────────────── */
-function processBusUpdate(busId, rawLat, rawLon) {
+function processBusUpdate(busId, rawLat, rawLon, forcedSpeed) {
   const { pos: snapped, idx: routeIdx } = snapToRoute(rawLat, rawLon);
   const [lat, lon] = snapped;
   const now    = Date.now();
   const prev   = busData[busId];
   const isDemo = DEMO_BUS_IDS.has(busId);
 
-  let speed = 0;
-  if (!isDemo) {
+  let speed = forcedSpeed != null ? forcedSpeed : 0;
+
+  if (forcedSpeed == null && !isDemo) {
     if (prev && prev.lat != null && lastUpdateTime[busId]) {
       const dtSec = (now - lastUpdateTime[busId]) / 1000;
       if (dtSec > 0 && dtSec < 60) {
@@ -1585,56 +1980,63 @@ function processBusUpdate(busId, rawLat, rawLon) {
 
   busData[busId] = { lat, lon, speed, progress, eta, routeIdx, remainingKm };
 
-  // Create map marker if new
+  /* Create map marker if new */
   if (!busMarkers[busId]) {
     const marker = L.marker([lat, lon], {
-      icon: makeBusIcon(0, isDemo, moving),
-      zIndexOffset: isDemo ? 900 : 1000
+      icon: makeBusIcon(0, busId, moving),
+      zIndexOffset: EV_BUS_IDS.has(busId) ? 950 : (isDemo ? 900 : 1000)
     }).addTo(map);
-    marker.bindPopup('', { maxWidth: 220 });
+    marker.bindPopup('', { maxWidth: 240 });
     busMarkers[busId] = { marker, heading: 0, currentPos: [lat, lon], animFrame: null };
   }
 
   animateBus(busId, lat, lon);
   updateTopbarDistance(busId, remainingKm);
 
-  // Update popup content
-  const nextStop = getNextStop(routeIdx);
-  const isDemo2  = DEMO_BUS_IDS.has(busId);
-  const typeLabelHtml = isDemo2
-    ? `<span style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#93c5fd;border-radius:7px;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-left:6px;">DEMO</span>`
-    : `<span style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.22);color:#f97316;border-radius:7px;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-left:6px;">REAL</span>`;
+  /* Popup */
+  const nextStop  = getNextStop(routeIdx);
+  const sustain   = getSustainability(busId);
+  const tc        = busTypeClass(busId);
+  const tl        = busTypeLabel(busId);
+  const typeColor = { real:'#f97316', demo:'#93c5fd', ev:'#06b6d4' }[tc] || '#f97316';
+  const typeBgColor = { real:'rgba(249,115,22,0.12)', demo:'rgba(59,130,246,0.12)', ev:'rgba(6,182,212,0.12)' }[tc] || 'rgba(249,115,22,0.12)';
+  const typeBorderColor = { real:'rgba(249,115,22,0.22)', demo:'rgba(59,130,246,0.22)', ev:'rgba(6,182,212,0.22)' }[tc] || 'rgba(249,115,22,0.22)';
+
+  const fuelColors = { ev:'#06b6d4', cng:'#86efac', diesel:'#f97316', petrol:'#facc15' };
+  const fuelColor = fuelColors[sustain.fuelClass] || '#f97316';
 
   busMarkers[busId].marker.setPopupContent(`
-    <div style="font-family:'DM Sans',sans-serif;font-size:12px;min-width:190px;padding:12px 14px;">
+    <div style="font-family:'DM Sans',sans-serif;font-size:12px;min-width:210px;padding:12px 14px;">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:8px;color:#f1f5f9;display:flex;align-items:center;">
-        🚌 ${busId.toUpperCase()}${typeLabelHtml}
+        🚌 ${busId.toUpperCase()}
+        <span style="background:${typeBgColor};border:1px solid ${typeBorderColor};color:${typeColor};border-radius:7px;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-left:6px;">${tl}</span>
       </div>
-      <div style="color:#64748b;margin-bottom:3px;">Status: <b style="color:${moving?'#22c55e':'#f87171'}">${moving?'Moving':'Stopped'}</b></div>
+      <div style="color:#64748b;margin-bottom:3px;">Status: <b style="color:${moving?'#22c55e':'#f87171'}">${moving?'Running':'Stopped'}</b></div>
       <div style="color:#64748b;margin-bottom:3px;">Speed: <b style="color:#f97316">${Math.round(speed)} km/h</b></div>
+      <div style="color:#64748b;margin-bottom:3px;">ETA: <b>${formatEta(eta, speed)}</b></div>
       <div style="color:#64748b;margin-bottom:3px;">Remaining: <b style="color:#22c55e">${remainingKm.toFixed(1)} km</b></div>
-      <div style="color:#64748b;margin-bottom:3px;">Progress: <b style="color:#22c55e">${Math.round(progress*100)}%</b></div>
-      <div style="color:#64748b;margin-bottom:${nextStop?'3px':'0'};">ETA: <b>${formatEta(eta, speed)}</b></div>
-      ${nextStop ? `<div style="color:#64748b;">Next stop: <b style="color:#93c5fd">${nextStop.name}</b></div>` : ''}
+      <div style="color:#64748b;margin-bottom:6px;">Progress: <b style="color:#22c55e">${Math.round(progress*100)}%</b></div>
+      <div style="height:1px;background:rgba(255,255,255,0.05);margin-bottom:6px;"></div>
+      <div style="color:#64748b;margin-bottom:3px;">⛽ Fuel: <b style="color:${fuelColor}">${sustain.fuelType}</b></div>
+      <div style="color:#64748b;margin-bottom:${nextStop?'3px':'0'};">🌿 Emission: <b style="color:#86efac">${sustain.emissionStd}</b></div>
+      ${nextStop ? `<div style="color:#64748b;margin-top:3px;">Next stop: <b style="color:#93c5fd">${nextStop.name}</b></div>` : ''}
     </div>
   `);
 
-  // Ensure rail button exists + update dot
   ensureBusRailButton(busId);
   updateBusRailButton(busId, moving);
-
-  // Refresh details panel if this bus is selected
   refreshOpenPanel(busId);
+  updateFleetPanel();
 
   document.getElementById('bus-count-num').textContent = Object.keys(busMarkers).length;
 }
 
 /* ──────────────────────────────────────────────────────
-   CLEANUP — remove stale real-bus markers
+   CLEANUP
 ────────────────────────────────────────────────────── */
 function removeStaleMarkers(activeBusIds) {
   Object.keys(busMarkers).forEach(busId => {
-    if (DEMO_BUS_IDS.has(busId)) return;  // never remove demo buses
+    if (DEMO_BUS_IDS.has(busId)) return;
     if (!activeBusIds.has(busId)) {
       if (busMarkers[busId].animFrame) cancelAnimationFrame(busMarkers[busId].animFrame);
       busMarkers[busId].marker.remove();
@@ -1642,13 +2044,12 @@ function removeStaleMarkers(activeBusIds) {
       delete busData[busId];
       delete lastUpdateTime[busId];
       delete busRemainingKm[busId];
-      // Remove rail button
       const btn = document.getElementById(`rail-btn-${busId}`);
       if (btn) btn.remove();
-      // Close panel if this was selected
       if (activePanelBus === busId) closeDetailsPanel();
     }
   });
+  updateFleetPanel();
   document.getElementById('bus-count-num').textContent = Object.keys(busMarkers).length;
 }
 
@@ -1668,7 +2069,9 @@ function initFirebase() {
           const d = data[busId];
           if (d && d.lat != null && d.lon != null) {
             activeBusIds.add(busId);
-            processBusUpdate(busId, parseFloat(d.lat), parseFloat(d.lon));
+            /* If Firebase includes speed field use it, else derive from movement */
+            const fbSpeed = (d.speed != null) ? parseFloat(d.speed) : null;
+            processBusUpdate(busId, parseFloat(d.lat), parseFloat(d.lon), fbSpeed);
           }
         });
       }
@@ -1693,24 +2096,33 @@ function initFirebase() {
 }
 
 /* ──────────────────────────────────────────────────────
-   DEMO BUS — permanently stopped at 40% of route
+   DEMO BUSES
+
+   BUS-DEMO-01  — CNG bus, STOPPED at 40% of route
+   BUS-EV-01    — Electric bus, RUNNING at 25% of route
+   Both persist permanently on the map.
 ────────────────────────────────────────────────────── */
-function spawnDemoBus() {
+function spawnDemoBuses() {
   if (!routeCoords.length) return;
-  const idx = Math.floor(routeCoords.length * 0.4);
-  const [lat, lon] = routeCoords[idx];
-  const DEMO_ID = 'BUS-DEMO-01';
 
-  processBusUpdate(DEMO_ID, lat, lon);
+  /* ── Bus 1: CNG / Stopped ── */
+  const idx1 = Math.floor(routeCoords.length * 0.4);
+  const [lat1, lon1] = routeCoords[idx1];
+  processBusUpdate('BUS-DEMO-01', lat1, lon1, 0); /* speed=0 → Stopped */
 
-  // Force stopped state
-  busData[DEMO_ID] = { ...busData[DEMO_ID], speed: 0, eta: null };
-  if (busMarkers[DEMO_ID]) {
-    busMarkers[DEMO_ID].marker.setIcon(makeBusIcon(busMarkers[DEMO_ID].heading, true, false));
+  /* ── Bus 2: EV / Running (simulate movement along route) ── */
+  let evIdx = Math.floor(routeCoords.length * 0.25);
+  function stepEV() {
+    if (!routeCoords[evIdx]) return;
+    const [lat, lon] = routeCoords[evIdx];
+    const simSpeed = 42 + Math.random() * 18; /* 42–60 km/h */
+    processBusUpdate('BUS-EV-01', lat, lon, simSpeed);
+    evIdx = (evIdx + Math.floor(routeCoords.length * 0.015)) % routeCoords.length;
+    setTimeout(stepEV, 4000 + Math.random() * 2000);
   }
-  updateBusRailButton(DEMO_ID, false);
+  stepEV();
 
-  showToast('Demo bus BUS-DEMO-01 spawned on route ✓');
+  showToast('Demo buses spawned: CNG (stopped) + EV (running) ✓');
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1774,11 +2186,9 @@ async function init() {
   document.getElementById('to-dist').textContent   = formatDist(routeTotalKm);
 
   setLoadProgress(80, 'Drawing route…');
-  // Route polyline (glow + solid)
   L.polyline(routeCoords, { color:'#f9731633', weight:16, opacity:0.45, lineJoin:'round', lineCap:'round', smoothFactor:1.5 }).addTo(map);
   L.polyline(routeCoords, { color:'#f97316',   weight:4,  opacity:0.88, lineJoin:'round', lineCap:'round', smoothFactor:1.5 }).addTo(map);
 
-  // Origin + Destination markers
   L.marker(fromCoord, { icon: makeEndpointIcon('#22c55e', '🟢'), zIndexOffset: 900 })
     .addTo(map)
     .bindPopup(`<div class="stop-popup"><div class="stop-popup-header"><div class="stop-popup-icon" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);">🟢</div><div><div class="stop-popup-name">${from}</div><div class="stop-popup-sub">Route Origin</div></div></div><div class="stop-popup-row">📏 Total route: <span>${routeTotalKm.toFixed(1)} km</span></div></div>`, { maxWidth: 240 });
@@ -1803,7 +2213,7 @@ async function init() {
     setTimeout(() => lo.style.display = 'none', 500);
   }, 400);
 
-  spawnDemoBus();
+  spawnDemoBuses();
   initFirebase();
 }
 
@@ -1817,7 +2227,7 @@ window.addEventListener('DOMContentLoaded', init);
   let dsRowTimes = {};
   const SPEED_THRESHOLD = 2;
   const MAX_SPEED       = 120;
-  const DS_DEMO_IDS     = new Set(['BUS-DEMO-01']);
+  const DS_DEMO_IDS     = new Set(['BUS-DEMO-01', 'BUS-EV-01']);
 
   const panel        = document.getElementById('ds-panel');
   const fab          = document.getElementById('ds-fab');
@@ -1866,6 +2276,10 @@ window.addEventListener('DOMContentLoaded', init);
     const spdClr= moving ? '#86efac' : '#fca5a5';
     dsRowTimes[busId] = new Date();
 
+    const sustain = (typeof getSustainability === 'function') ? getSustainability(busId) : { fuelType:'—', fuelClass:'diesel', emissionStd:'—' };
+    const fuelColors = { ev:'#06b6d4', cng:'#86efac', diesel:'#f97316', petrol:'#facc15' };
+    const emColors   = { zero:'#86efac', bs6:'#93c5fd', bs4:'#f97316', bs3:'#fca5a5' };
+
     let row = document.getElementById(`ds-row-${busId}`);
     if (!row) {
       row = document.createElement('tr');
@@ -1885,6 +2299,8 @@ window.addEventListener('DOMContentLoaded', init);
           <div class="ds-speed-bar-track"><div class="ds-speed-bar-fill" style="width:${pct}%;background:${barClr}"></div></div>
         </div>
       </td>
+      <td><span class="ds-fuel-badge ${sustain.fuelClass}" style="color:${fuelColors[sustain.fuelClass]||'#f97316'}">${sustain.fuelType}</span></td>
+      <td><span style="font-size:10px;color:${emColors[sustain.emissionClass]||'#94a3b8'}">${sustain.emissionStd}</span></td>
       <td><span class="ds-status ${moving?'moving':'stopped'}"><div class="ds-status-dot"></div>${moving?'Moving':'Stopped'}</span></td>
       <td><span class="ds-time" data-id="${busId}">${timeAgo(dsRowTimes[busId])}</span></td>
     `;
@@ -1951,7 +2367,7 @@ window.addEventListener('DOMContentLoaded', init);
       if (!db) {
         if (elapsed >= MAX_WAIT) {
           clearInterval(interval);
-          tbody.innerHTML = '<tr><td colspan="7"><div id="ds-empty">⚠ Firebase not available</div></td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9"><div id="ds-empty">⚠ Firebase not available</div></td></tr>';
         }
         return;
       }
