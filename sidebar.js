@@ -18,6 +18,13 @@
  *  window.respawnDemoBuses(coords) so map.html's local routeCoords
  *  variable is updated inside the function — bypassing the JS closure
  *  scoping issue where window.routeCoords and the local var diverged.
+ *
+ * SUSTAINABILITY UPDATE (v3):
+ *  Bus details panel now shows fuel type (CNG / Electric / Diesel),
+ *  emission compliance standard (BS VI / BS IV / BS III), and a
+ *  sustainability rating for each bus. Stop popups include per-bus
+ *  fuel labels. Schedule panel integration feeds next-bus arrival
+ *  timings including fuel & emission data.
  */
 (function () {
   'use strict';
@@ -31,6 +38,13 @@
 
   /* Demo bus IDs — must mirror map.html */
   const DEMO_IDS = new Set(['BUS-DEMO-01', 'BUS-EV-01']);
+
+  /* ── Sustainability / emission config per bus (mirrors map.html) ── */
+  const BUS_SUSTAINABILITY = {
+    'BUS-DEMO-01': { fuel: 'CNG',      emission: 'BS VI',  icon: '⚡',  color: '#22c55e' },
+    'BUS-EV-01':   { fuel: 'Electric', emission: 'BS VI',  icon: '🔋',  color: '#3b82f6' },
+  };
+  const DEFAULT_SUSTAINABILITY = { fuel: 'Diesel', emission: 'BS IV', icon: '🚌', color: '#f97316' };
 
   /* ═══════════════════════════════════════════════════════════
      STATE
@@ -113,7 +127,7 @@
   --bt-border-hi: rgba(255,255,255,0.11);
   --bt-topbar:    60px;
   --bt-drawer-w:  310px;
-  --bt-panel-w:   308px;
+  --bt-panel-w:   328px;
   --bt-radius:    16px;
   --bt-radius-sm: 10px;
   --bt-radius-xs: 7px;
@@ -505,7 +519,7 @@
 #bt-panel {
   position: absolute;
   top: calc(var(--bt-topbar) + 12px);
-  right: -360px;
+  right: -380px;
   bottom: 14px;
   width: var(--bt-panel-w);
   z-index: 1080;
@@ -574,6 +588,16 @@
   background: rgba(59,130,246,0.1);
   border-color: rgba(59,130,246,0.3);
   box-shadow: 0 0 22px rgba(59,130,246,0.18);
+}
+#bt-avatar.electric {
+  background: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.3);
+  box-shadow: 0 0 22px rgba(59,130,246,0.18);
+}
+#bt-avatar.cng {
+  background: rgba(34,197,94,0.1);
+  border-color: rgba(34,197,94,0.3);
+  box-shadow: 0 0 22px rgba(34,197,94,0.15);
 }
 #bt-avatar-dot {
   position: absolute; bottom: 2px; right: 2px;
@@ -683,6 +707,86 @@
   font-size: 10px; color: var(--bt-faint);
 }
 .bt-prog-meta span { color: var(--bt-muted); }
+
+/* ─── Sustainability block ─────────────────────────────── */
+.bt-sus-block {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 11px;
+  padding: 11px 13px;
+  margin: 7px 0;
+}
+.bt-sus-title {
+  font-size: 9px; color: var(--bt-faint);
+  text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px;
+}
+.bt-sus-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 8px;
+  margin-bottom: 6px;
+}
+.bt-sus-row:last-child { margin-bottom: 0; }
+.bt-sus-key {
+  font-size: 10px; color: var(--bt-muted); flex: 1;
+}
+.bt-sus-val {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: 6px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; white-space: nowrap;
+}
+.bt-sus-val.fuel-cng      { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.22);  color: #86efac; }
+.bt-sus-val.fuel-electric { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.22); color: #93c5fd; }
+.bt-sus-val.fuel-diesel   { background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); color: #fdba74; }
+.bt-sus-val.emission-bs6  { background: rgba(34,197,94,0.08);  border: 1px solid rgba(34,197,94,0.18);  color: #86efac; }
+.bt-sus-val.emission-bs4  { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2);  color: #fde68a; }
+.bt-sus-val.emission-bs3  { background: rgba(239,68,68,0.07);  border: 1px solid rgba(239,68,68,0.18);  color: #fca5a5; }
+.bt-sus-val.emission-bs6t { background: rgba(34,197,94,0.08);  border: 1px solid rgba(34,197,94,0.18);  color: #86efac; }
+.bt-sus-note {
+  font-size: 9px; color: var(--bt-faint); margin-top: 6px;
+  padding-top: 6px; border-top: 1px solid var(--bt-border);
+  line-height: 1.5;
+}
+
+/* ─── Next bus upcoming strip ──────────────────────────── */
+.bt-nextbus-strip {
+  background: rgba(34,197,94,0.05);
+  border: 1px solid rgba(34,197,94,0.13);
+  border-radius: 10px;
+  padding: 8px 11px;
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bt-nextbus-icon { font-size: 15px; flex-shrink: 0; }
+.bt-nextbus-info { flex: 1; }
+.bt-nextbus-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.7px;
+  text-transform: uppercase; color: var(--bt-faint); margin-bottom: 2px;
+}
+.bt-nextbus-val {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 12px; color: #86efac;
+}
+.bt-nextbus-eta {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 16px; color: var(--bt-green); flex-shrink: 0;
+}
+
+/* ─── Traffic indicator in panel ──────────────────────── */
+.bt-traffic-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px;
+  border-radius: 9px; margin-bottom: 7px;
+  font-size: 10px; font-weight: 500;
+  transition: background 0.3s, border-color 0.3s;
+}
+.bt-traffic-row.clear    { background: rgba(34,197,94,0.06);  border: 1px solid rgba(34,197,94,0.14);  color: #86efac; }
+.bt-traffic-row.moderate { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.16); color: #fde68a; }
+.bt-traffic-row.heavy    { background: rgba(239,68,68,0.06);  border: 1px solid rgba(239,68,68,0.16);  color: #fca5a5; }
+.bt-traffic-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
 
 .bt-engine {
   margin: 10px 0 7px; padding: 9px 12px;
@@ -888,7 +992,7 @@
       <div id="bt-ph">
         <div id="bt-ph-left">
           <div id="bt-avatar">
-            <span>🚌</span>
+            <span id="bt-avatar-emoji">🚌</span>
             <div id="bt-avatar-dot"></div>
           </div>
           <div id="bt-ph-info">
@@ -928,6 +1032,40 @@
             <div class="bt-stat-val green" id="bp-pct">—</div>
             <div class="bt-stat-sub">Route done</div>
           </div>
+        </div>
+
+        <!-- Traffic condition row -->
+        <div class="bt-traffic-row clear" id="bp-traffic-row">
+          <div class="bt-traffic-dot"></div>
+          <span id="bp-traffic-txt">Traffic: Clear — ETA unaffected</span>
+        </div>
+
+        <!-- Sustainability / Emission block -->
+        <div class="bt-sus-block">
+          <div class="bt-sus-title">🌿 Sustainability & Emission Info</div>
+          <div class="bt-sus-row">
+            <span class="bt-sus-key">Fuel Type</span>
+            <span class="bt-sus-val fuel-diesel" id="bp-fuel">Diesel</span>
+          </div>
+          <div class="bt-sus-row">
+            <span class="bt-sus-key">Emission Standard</span>
+            <span class="bt-sus-val emission-bs4" id="bp-emission">BS IV</span>
+          </div>
+          <div class="bt-sus-row">
+            <span class="bt-sus-key">CO₂ Rating</span>
+            <span class="bt-sus-val" id="bp-co2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;">—</span>
+          </div>
+          <div class="bt-sus-note" id="bp-sus-note">—</div>
+        </div>
+
+        <!-- Next bus availability for this route -->
+        <div class="bt-nextbus-strip" id="bp-nextbus-strip">
+          <div class="bt-nextbus-icon">🕐</div>
+          <div class="bt-nextbus-info">
+            <div class="bt-nextbus-lbl">Next Bus on Route</div>
+            <div class="bt-nextbus-val" id="bp-nextbus-id">Loading…</div>
+          </div>
+          <div class="bt-nextbus-eta" id="bp-nextbus-eta">—</div>
         </div>
 
         <span class="bt-micro">Coordinates</span>
@@ -1241,6 +1379,17 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+     GET TRAFFIC MULTIPLIER from map.html global
+  ═══════════════════════════════════════════════════════════ */
+  function getTrafficMultiplier() {
+    return (typeof trafficMultiplier !== 'undefined') ? trafficMultiplier : 1.0;
+  }
+
+  function getTrafficLevel() {
+    return (typeof trafficLevel !== 'undefined') ? trafficLevel : 'clear';
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      ENDPOINT ICON HELPER
      Mirrors makeEndpointIcon from map.html exactly.
   ═══════════════════════════════════════════════════════════ */
@@ -1275,9 +1424,72 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+     BUILD STOP POPUP WITH FUEL + EMISSION + ETA PER BUS
+     Mirrors and extends the stop popup from map.html so that
+     every intermediate bus stop also shows fuel type & emission
+     compliance for each approaching bus.
+  ═══════════════════════════════════════════════════════════ */
+  function _buildStopPopup(stopName, stopNum, progressPct, distFromStart) {
+    /* Collect ETA rows for each active bus approaching this stop */
+    let etaRows = '';
+    const bData = (typeof busData !== 'undefined') ? busData : {};
+    const rCoords = (typeof routeCoords !== 'undefined' && routeCoords.length > 1) ? routeCoords : sidebarRouteCoords;
+    const rTotalKm = (typeof routeTotalKm !== 'undefined' && routeTotalKm > 0) ? routeTotalKm : sidebarRouteTotalKm;
+    const tMult = getTrafficMultiplier();
+    const tLevel = getTrafficLevel();
+
+    Object.entries(bData).forEach(([id, d]) => {
+      const busPct = Math.round((d.progress || 0) * 100);
+      if (busPct >= progressPct) return; /* already passed */
+      const remKm = distFromStart - ((d.progress || 0) * rTotalKm);
+      if (remKm <= 0) return;
+      const spd    = d.speed > 2 ? d.speed : 20;
+      const etaMin = Math.round((remKm / spd) * 60 * tMult);
+      const sus    = BUS_SUSTAINABILITY[id] || { fuel: 'Diesel', emission: 'BS IV', icon: '🚌', color: '#f97316' };
+      const fClass = sus.fuel.toLowerCase().replace(' ','');
+      const eClass = sus.emission.toLowerCase().replace(' ','');
+      etaRows += `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-size:13px;">${sus.icon}</span>
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#f1f5f9;flex:1;">${id.replace('BUS-','')}</span>
+          <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:5px;font-size:8px;font-weight:700;
+            ${fClass==='cng'?'background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.22);color:#86efac;':
+              fClass==='electric'?'background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.22);color:#93c5fd;':
+              'background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);color:#fdba74;'}">${sus.fuel}</span>
+          <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:5px;font-size:8px;font-weight:700;
+            ${eClass.includes('vi')||eClass==='bs6'?'background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);color:#86efac;':
+              eClass.includes('iv')||eClass==='bs4'?'background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fde68a;':
+              'background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.18);color:#fca5a5;'}">${sus.emission}</span>
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#f97316;min-width:30px;text-align:right;">${etaMin}m</span>
+        </div>`;
+    });
+
+    if (!etaRows) etaRows = '<div style="font-size:11px;color:#4b5768;padding:5px 0;">No buses currently approaching</div>';
+
+    return `<div style="font-family:'DM Sans',sans-serif;padding:14px 16px;min-width:230px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
+        <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);
+          border-radius:8px;display:grid;place-items:center;font-size:13px;flex-shrink:0;">🚏</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#f1f5f9;line-height:1.2;">${stopName}</div>
+          <div style="font-size:10px;color:#4b5768;margin-top:2px;">Stop ${stopNum} · ${distFromStart.toFixed(1)} km from origin</div>
+        </div>
+      </div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:#4b5768;margin-bottom:5px;">
+        BUS ETA AT THIS STOP
+      </div>
+      ${etaRows}
+      <div style="margin-top:7px;font-size:9px;color:#4b5768;border-top:1px solid rgba(255,255,255,0.04);padding-top:6px;">
+        📍 Route progress: ${progressPct}% &nbsp;·&nbsp; 🚦 Traffic: ${tLevel} (×${tMult.toFixed(2)})
+      </div>
+    </div>`;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      INTERMEDIATE BUS STOP GENERATION + PLACEMENT
      Generates 6 evenly spaced stops along the route coords
      and places them into busStopLayer.
+     Now includes fuel + emission in stop popups.
   ═══════════════════════════════════════════════════════════ */
   function generateAndPlaceStops(coords, totalKm, fName, tName) {
     busStopLayer.clearLayers();
@@ -1293,33 +1505,15 @@
       const idx = margin + i * step;
       if (idx >= coords.length) continue;
 
-      const [lat, lon] = coords[idx];
+      const [lat, lon]    = coords[idx];
       const distFromStart = calcTotalKm(coords.slice(0, idx));
       const progressPct   = Math.round((idx / (coords.length - 1)) * 100);
       const stopName      = `Route Stop ${i}`;
 
-      sidebarBusStops.push({ lat, lon, name: stopName, idx });
-
-      const popupHtml = `
-        <div style="font-family:'DM Sans',sans-serif;padding:12px 14px;min-width:180px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);
-              border-radius:8px;display:grid;place-items:center;font-size:13px;flex-shrink:0;">🚏</div>
-            <div>
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#f1f5f9;line-height:1.2;">${stopName}</div>
-              <div style="font-size:10px;color:#4b5768;margin-top:2px;">Bus Stop · Stop ${i}</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;margin-bottom:4px;">
-            📍 Route progress at stop: <span style="color:#93c5fd;font-weight:500;">${progressPct}%</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-            📏 From start: <span style="color:#93c5fd;font-weight:500;">${distFromStart.toFixed(1)} km</span>
-          </div>
-        </div>`;
+      sidebarBusStops.push({ lat, lon, name: stopName, idx, distFromStart, progressPct });
 
       const marker = L.marker([lat, lon], { icon: _stopIcon(), zIndexOffset: 200 })
-        .bindPopup(popupHtml, { maxWidth: 240 });
+        .bindPopup(_buildStopPopup(stopName, i, progressPct, distFromStart), { maxWidth: 260 });
       marker.addTo(busStopLayer);
       sidebarStopMarkerRefs[`stop_${i}`] = marker;
     }
@@ -1328,7 +1522,7 @@
     enrichStopNames(coords);
   }
 
-  /* Async reverse geocode for stop names */
+  /* Async reverse geocode for stop names — updates popup with real name */
   async function enrichStopNames(coords) {
     for (let i = 0; i < sidebarBusStops.length; i++) {
       const stop = sidebarBusStops[i];
@@ -1346,27 +1540,9 @@
           const key    = `stop_${i+1}`;
           const marker = sidebarStopMarkerRefs[key];
           if (marker) {
-            const distFromStart = calcTotalKm(coords.slice(0, stop.idx));
-            const progressPct   = sidebarRouteCoords.length
-              ? Math.round((stop.idx / (sidebarRouteCoords.length - 1)) * 100) : 0;
-            const updatedPopup = `
-              <div style="font-family:'DM Sans',sans-serif;padding:12px 14px;min-width:180px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                  <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);
-                    border-radius:8px;display:grid;place-items:center;font-size:13px;flex-shrink:0;">🚏</div>
-                  <div>
-                    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#f1f5f9;line-height:1.2;">${name}</div>
-                    <div style="font-size:10px;color:#4b5768;margin-top:2px;">Bus Stop · Stop ${i+1}</div>
-                  </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;margin-bottom:4px;">
-                  📍 Route progress at stop: <span style="color:#93c5fd;font-weight:500;">${progressPct}%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;">
-                  📏 From start: <span style="color:#93c5fd;font-weight:500;">${distFromStart.toFixed(1)} km</span>
-                </div>
-              </div>`;
-            marker.setPopupContent(updatedPopup);
+            marker.setPopupContent(
+              _buildStopPopup(name, i + 1, stop.progressPct, stop.distFromStart)
+            );
           }
         }
       } catch (e) { /* ignore */ }
@@ -1442,7 +1618,8 @@
      3. Fetches OSRM route.
      4. Draws glow + sharp polylines into routeLayer.
      5. Places From / To markers into markerLayer.
-     6. Generates bus stop markers into busStopLayer.
+     6. Generates bus stop markers (with fuel/emission popups)
+        into busStopLayer.
      7. Updates global route state so live buses track the
         new route.
      8. Fits map to new route.
@@ -1546,6 +1723,11 @@
       const mins     = Math.round(rData.routes[0].duration / 60);
       const distStr  = dist.toFixed(1);
 
+      /* Apply traffic multiplier to ETA display */
+      const tMult   = getTrafficMultiplier();
+      const tLevel  = getTrafficLevel();
+      const minsAdj = Math.round(mins * tMult);
+
       /* Store in module state */
       sidebarRouteCoords  = coords;
       sidebarRouteTotalKm = dist;
@@ -1600,13 +1782,14 @@
            </div>
            <div style="color:#64748b;font-size:11px;">Destination</div>
            <div style="color:#64748b;font-size:11px;margin-top:4px;">
-             ⏱ ETA: <b style="color:#f97316">~${mins} min</b>
+             ⏱ ETA: <b style="color:#f97316">~${minsAdj} min</b>
+             ${tLevel !== 'clear' ? `<span style="color:#fde68a;font-size:9px;margin-left:4px;">(${tLevel} traffic)</span>` : ''}
            </div>
          </div>`,
         { maxWidth: 240 }
       );
 
-      /* ── 7. Bus stop markers into busStopLayer ── */
+      /* ── 7. Bus stop markers with fuel/emission popups ── */
       generateAndPlaceStops(coords, dist, fName, tName);
 
       /* ── 8. Sync global route state (updates bus ETA/progress calcs)
@@ -1622,9 +1805,10 @@
       );
 
       /* ── 10. UI feedback ── */
-      etaEl.textContent = `${distStr} km · ~${mins} min`;
+      const trafficNote = tLevel !== 'clear' ? ` (${tLevel} traffic)` : '';
+      etaEl.textContent = `${distStr} km · ~${minsAdj} min${trafficNote}`;
       etaEl.className   = 'has-result';
-      showToast(`Route: ${distStr} km · ~${mins} min`);
+      showToast(`Route: ${distStr} km · ~${minsAdj} min`);
 
     } catch (e) {
       console.error('[sidebar.js] Directions error:', e);
@@ -1667,12 +1851,13 @@
     if (document.getElementById(btnId)) return;
 
     const isDemo = DEMO_IDS.has(busId);
+    const sus    = BUS_SUSTAINABILITY[busId] || { fuel: 'Diesel', emission: 'BS IV', icon: '🚌', color: '#f97316' };
     const btn    = document.createElement('div');
     btn.id        = btnId;
     btn.className = 'bt-bus-icon' + (isDemo ? ' demo' : '');
     btn.innerHTML = `
       <div class="bt-bus-disc">
-        <span class="bt-disc-emoji">🚌</span>
+        <span class="bt-disc-emoji">${sus.icon}</span>
         <div class="bt-bus-dot" id="bt-dot-${safeId}"></div>
       </div>
       <div class="bt-bus-lbl">${busId.replace('BUS-','')}</div>
@@ -1703,6 +1888,38 @@
     const safeId = busId.replace(/[^a-zA-Z0-9-_]/g, '-');
     const btn = document.getElementById(`bt-dicon-${safeId}`);
     if (btn) btn.remove();
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════
+     UPCOMING BUS HELPER
+     Returns the next bus arriving on this route (from map.html
+     schedule data if available, else computed from active buses).
+  ═══════════════════════════════════════════════════════════ */
+  function getNextBusInfo(excludeBusId) {
+    /* Try to use map.html's schedule generator if available */
+    if (typeof generateSchedule === 'function') {
+      const schedule = generateSchedule();
+      const next = schedule.find(s => s.status !== 'departed');
+      if (next) {
+        return {
+          id:  next.id,
+          eta: next.freqMin === 0 ? 'Arriving' : next.freqMin + ' min',
+          fuel: next.fuel,
+          emission: next.emission,
+        };
+      }
+    }
+    /* Fallback: pick the other active bus */
+    const bData  = (typeof busData !== 'undefined') ? busData : {};
+    const others = Object.keys(bData).filter(id => id !== excludeBusId);
+    if (!others.length) return null;
+    const id  = others[0];
+    const d   = bData[id];
+    const rem = d.remainingKm || 0;
+    const spd = d.speed > 2 ? d.speed : 20;
+    const eta = Math.round((rem / spd) * 60 * getTrafficMultiplier());
+    return { id, eta: eta + ' min', fuel: d.fuel || 'Diesel', emission: d.emission || 'BS IV' };
   }
 
 
@@ -1741,19 +1958,27 @@
     if (!data) return;
 
     const isDemo  = DEMO_IDS.has(busId);
+    const sus     = BUS_SUSTAINABILITY[busId] || { fuel: 'Diesel', emission: 'BS IV', icon: '🚌', color: '#f97316' };
     const speed   = data.speed || 0;
     const moving  = speed >= 2;
     const pct     = Math.round((data.progress || 0) * 100);
     const eta     = data.eta;
     const rem     = data.remainingKm;
+    const tMult   = getTrafficMultiplier();
+    const tLevel  = getTrafficLevel();
 
+    /* ── Card styling ── */
     const card = document.getElementById('bt-panel-card');
-    card.className = isDemo ? 'demo' : '';
+    const fuelKey = sus.fuel.toLowerCase().replace(' ','');
+    card.className = isDemo ? 'demo' : (fuelKey === 'electric' ? 'electric' : fuelKey === 'cng' ? 'cng' : '');
 
+    /* ── Avatar ── */
     const avatar = document.getElementById('bt-avatar');
-    avatar.className = isDemo ? 'demo' : '';
+    avatar.className = isDemo ? 'demo' : (fuelKey === 'electric' ? 'electric' : fuelKey === 'cng' ? 'cng' : '');
+    document.getElementById('bt-avatar-emoji').textContent = sus.icon;
     document.getElementById('bt-avatar-dot').className = moving ? '' : 'stopped';
 
+    /* ── Header info ── */
     document.getElementById('bt-ph-name').textContent = busId.toUpperCase();
 
     const typeB = document.getElementById('bt-badge-type');
@@ -1764,15 +1989,18 @@
     statB.textContent = moving ? 'Running' : 'Stopped';
     statB.className = 'bt-ph-badge ' + (moving ? 'running' : 'stopped');
 
+    /* ── Speed ── */
     const speedEl = document.getElementById('bp-speed');
     speedEl.textContent = Math.round(speed) + ' km/h';
     speedEl.className = 'bt-stat-val ' + (moving ? 'accent' : 'red');
 
+    /* ── ETA (traffic-adjusted) ── */
     const etaEl = document.getElementById('bp-eta');
     if (!moving) {
       etaEl.textContent = 'Bus Stopped';
       etaEl.className = 'bt-stat-val red';
     } else if (eta != null && !isNaN(eta)) {
+      /* eta from busData is already traffic-adjusted in map.html */
       const mins = Math.floor(eta);
       const secs = Math.round((eta - mins) * 60);
       etaEl.textContent = `${mins}m ${secs}s`;
@@ -1782,24 +2010,68 @@
       etaEl.className = 'bt-stat-val accent';
     }
 
+    /* ── Remaining / Progress ── */
     document.getElementById('bp-remaining').textContent =
       rem != null ? rem.toFixed(1) + ' km' : '—';
     document.getElementById('bp-pct').textContent = pct + '%';
 
+    /* ── Traffic condition row ── */
+    const trafficRow = document.getElementById('bp-traffic-row');
+    const trafficTxt = document.getElementById('bp-traffic-txt');
+    trafficRow.className = 'bt-traffic-row ' + tLevel;
+    const trafficMap = {
+      clear:    '🟢 Traffic Clear — ETA unaffected',
+      moderate: `🟡 Moderate Traffic — ETA ×${tMult.toFixed(2)}`,
+      heavy:    `🔴 Heavy Traffic — ETA ×${tMult.toFixed(2)} (delays possible)`,
+    };
+    trafficTxt.textContent = trafficMap[tLevel] || 'Traffic: Clear';
+
+    /* ── Sustainability block ── */
+    const fuelEl     = document.getElementById('bp-fuel');
+    const emissionEl = document.getElementById('bp-emission');
+    const co2El      = document.getElementById('bp-co2');
+    const susNote    = document.getElementById('bp-sus-note');
+
+    /* Fuel badge */
+    fuelEl.textContent = sus.fuel;
+    fuelEl.className   = `bt-sus-val fuel-${fuelKey}`;
+
+    /* Emission badge */
+    const emissionKey = sus.emission.toLowerCase().replace(' ','').replace('bharatstage','bs').replace('vi','6').replace('iv','4').replace('iii','3');
+    emissionEl.textContent = sus.emission;
+    emissionEl.className   = `bt-sus-val emission-${emissionKey}`;
+
+    /* CO₂ rating */
+    const co2Map = {
+      'Electric': '⚡ Zero tailpipe emissions',
+      'CNG':      '🌿 ~25% less CO₂ vs Diesel',
+      'Diesel':   '⛽ Standard CO₂ output',
+    };
+    co2El.textContent  = co2Map[sus.fuel] || '—';
+
+    /* Sustainability note */
+    const susNoteMap = {
+      'BS VI':  '✅ Meets latest Bharat Stage VI — lowest NOx & PM emissions. Compliant from Apr 2020.',
+      'BS IV':  '⚠️ Meets Bharat Stage IV. Compliant from Apr 2017. Upgrade recommended.',
+      'BS III': '🔴 Bharat Stage III. Older standard — higher NOx & particulate output.',
+    };
+    susNote.textContent = susNoteMap[sus.emission] || '—';
+
+    /* ── Coordinates ── */
     document.getElementById('bp-lat').textContent =
       data.lat != null ? data.lat.toFixed(6) : '—';
     document.getElementById('bp-lon').textContent =
       data.lon != null ? data.lon.toFixed(6) : '—';
 
-    /* Use sidebar route names if a sidebar route is active, else fall back to URL params */
+    /* ── Route progress bar ── */
     const fLabel = sidebarFromName || new URLSearchParams(window.location.search).get('from') || 'Origin';
     const tLabel = sidebarToName   || new URLSearchParams(window.location.search).get('to')   || 'Destination';
     document.getElementById('bp-from-lbl').textContent = fLabel;
     document.getElementById('bp-to-lbl').textContent   = tLabel;
+    document.getElementById('bp-bar').style.width      = pct + '%';
+    document.getElementById('bp-pct-lbl').textContent  = pct + '%';
 
-    document.getElementById('bp-bar').style.width    = pct + '%';
-    document.getElementById('bp-pct-lbl').textContent = pct + '%';
-
+    /* ── Engine status ── */
     const engine = document.getElementById('bp-engine');
     const engTxt = document.getElementById('bp-engine-txt');
     engine.className = 'bt-engine ' + (moving ? 'running' : 'idle');
@@ -1807,10 +2079,28 @@
       ? `Engine Running — ${Math.round(speed)} km/h`
       : 'Engine Idle — Bus Stopped';
 
+    /* ── Last updated ── */
     const lu = (typeof lastUpdateTime !== 'undefined') ? lastUpdateTime[busId] : null;
     document.getElementById('bp-updated').textContent =
       lu ? new Date(lu).toLocaleTimeString() : '—';
 
+    /* ── Next bus on route ── */
+    const nextBus = getNextBusInfo(busId);
+    if (nextBus) {
+      const nextFuelKey = nextBus.fuel.toLowerCase().replace(' ','');
+      document.getElementById('bp-nextbus-id').innerHTML = `
+        ${nextBus.id.replace('BUS-','').replace('TN-38 N ','TN ')}
+        <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:4px;font-size:8px;font-weight:700;margin-left:4px;
+          ${nextFuelKey==='cng'?'background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.22);color:#86efac;':
+            nextFuelKey==='electric'?'background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.22);color:#93c5fd;':
+            'background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);color:#fdba74;'}">${nextBus.fuel}</span>`;
+      document.getElementById('bp-nextbus-eta').textContent = nextBus.eta;
+    } else {
+      document.getElementById('bp-nextbus-id').textContent  = 'No info';
+      document.getElementById('bp-nextbus-eta').textContent = '—';
+    }
+
+    /* ── Focus button styling ── */
     const focusBtn = document.getElementById('bp-focus');
     focusBtn.className = 'bt-focus-btn' + (isDemo ? ' demo' : '');
   }
