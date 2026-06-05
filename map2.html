@@ -605,7 +605,7 @@
     }
 
     /* ══════════════════════════════════════════════════════
-       SUSTAINABILITY CARD  ← NEW
+       SUSTAINABILITY CARD
     ══════════════════════════════════════════════════════ */
     .dp-sustain-card {
       margin-top: 10px;
@@ -710,7 +710,7 @@
     }
 
     /* ══════════════════════════════════════════════════════
-       AVAILABILITY STRIP  ← NEW
+       AVAILABILITY STRIP
     ══════════════════════════════════════════════════════ */
     .dp-avail-strip {
       margin-top: 10px; display: grid;
@@ -779,7 +779,7 @@
     }
 
     /* ══════════════════════════════════════════════════════
-       FLEET AVAILABILITY PANEL (top-left)  ← NEW
+       FLEET AVAILABILITY PANEL (top-left)
     ══════════════════════════════════════════════════════ */
     #fleet-panel {
       position: absolute;
@@ -975,7 +975,6 @@
     .ds-status.moving  .ds-status-dot { background:#22c55e; animation:livePulse 1.4s ease-in-out infinite; }
     .ds-status.stopped .ds-status-dot { background:#ef4444; }
     .ds-time { color: var(--faint); font-size:10px; }
-    /* Fuel column in table */
     .ds-fuel-badge { display:inline-block; font-size:9px; font-weight:600; padding:1px 6px; border-radius:10px; }
     .ds-fuel-badge.ev     { background:rgba(6,182,212,0.1);   border:1px solid rgba(6,182,212,0.25);   color:var(--cyan); }
     .ds-fuel-badge.cng    { background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.2);   color:#86efac; }
@@ -1238,7 +1237,7 @@
         <span id="dp-engine-text">Engine Running — Bus Moving</span>
       </div>
 
-      <!-- ══ AVAILABILITY INFO ══ -->
+      <!-- Availability info -->
       <div class="dp-section-label">Live Availability</div>
       <div class="dp-avail-strip" id="dp-avail-strip">
         <div class="dp-avail-item">
@@ -1255,7 +1254,7 @@
         </div>
       </div>
 
-      <!-- ══ SUSTAINABILITY ══ -->
+      <!-- Sustainability -->
       <div class="dp-sustain-card" id="dp-sustain-card">
         <div class="dp-sustain-title">
           <div class="dp-sustain-title-icon">🌿</div>
@@ -1376,22 +1375,18 @@ const firebaseConfig = {
 </script>
 
 <!-- ════════════════════════════════════════════════════════
-     SUSTAINABILITY DATABASE  ← NEW
-     Defines fuel type, emission standard, and CO2 impact
-     score (0–100, lower = greener) per bus ID.
+     SUSTAINABILITY DATABASE
 ════════════════════════════════════════════════════════ -->
 <script>
 const BUS_SUSTAINABILITY = {
-  /* Real GPS buses — add more bus IDs here as needed */
   'default': {
     fuelType:         'Diesel',
     fuelClass:        'diesel',
     emissionStd:      'Bharat Stage VI',
     emissionClass:    'bs6',
-    co2Score:         45,       /* 0=zero emission, 100=very high */
+    co2Score:         45,
     co2Label:         'Moderate'
   },
-  /* Demo bus — CNG */
   'BUS-DEMO-01': {
     fuelType:         'CNG',
     fuelClass:        'cng',
@@ -1400,7 +1395,6 @@ const BUS_SUSTAINABILITY = {
     co2Score:         28,
     co2Label:         'Low'
   },
-  /* EV demo bus */
   'BUS-EV-01': {
     fuelType:         'Electric (EV)',
     fuelClass:        'ev',
@@ -1415,7 +1409,6 @@ function getSustainability(busId) {
   return BUS_SUSTAINABILITY[busId] || BUS_SUSTAINABILITY['default'];
 }
 
-/* Color for CO2 bar */
 function co2BarColor(score) {
   if (score <= 5)  return '#22c55e';
   if (score <= 30) return '#86efac';
@@ -1442,6 +1435,9 @@ let stopMarkers     = {};
 let routeTotalKm    = 0;
 let busRemainingKm  = {};
 
+/* ── Dedicated vehicle layer — NEVER cleared on route change ── */
+let vehicleLayer    = null;
+
 let activePanelBus  = null;
 
 /* Demo bus IDs and their colour class */
@@ -1450,6 +1446,9 @@ const EV_BUS_IDS    = new Set(['BUS-EV-01']);
 
 const SNAP_THRESHOLD         = 0.0003;
 const SPEED_MOVING_THRESHOLD = 2;
+
+/* EV animation control — cancelable across route changes */
+let evAnimTimeout = null;
 
 /* ──────────────────────────────────────────────────────
    UTILS
@@ -1480,7 +1479,6 @@ function easeInOut(t)    { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; 
 
 function isMoving(speed) { return (speed || 0) >= SPEED_MOVING_THRESHOLD; }
 
-/* ── Enhanced ETA logic ── */
 function formatEta(etaMinutes, speed) {
   if (speed != null && speed < SPEED_MOVING_THRESHOLD) return 'Bus Stopped';
   if (speed == null) return 'ETA Calculating…';
@@ -1536,7 +1534,6 @@ function updateTopbarDistance(busId, remainingKm) {
   }
 }
 
-/* ── Fleet availability counter ── */
 function updateFleetPanel() {
   const ids = Object.keys(busData);
   let online = 0, stopped = 0, running = 0;
@@ -1546,11 +1543,21 @@ function updateFleetPanel() {
     online++;
     if (isMoving(d.speed)) running++; else stopped++;
   });
-  const offline = 0; /* buses removed from stale are gone from busData */
   document.getElementById('fleet-online').textContent  = online;
   document.getElementById('fleet-stopped').textContent = stopped;
-  document.getElementById('fleet-offline').textContent = offline;
+  document.getElementById('fleet-offline').textContent = 0;
   document.getElementById('fleet-running').textContent = running;
+}
+
+/* ──────────────────────────────────────────────────────
+   VEHICLE LAYER — helper to get the active layer
+   Prefers sidebar's vehicleLayer if set, else uses
+   the local one created during init.
+────────────────────────────────────────────────────── */
+function getVehicleLayer() {
+  /* sidebar.js sets window._btVehicleLayer once its layer groups are ready */
+  if (window._btVehicleLayer) return window._btVehicleLayer;
+  return vehicleLayer;
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1842,7 +1849,7 @@ function populatePanelData(busId, data) {
   speedEl.textContent = Math.round(data.speed || 0) + ' km/h';
   speedEl.className   = 'dp-stat-value ' + (moving ? (isEV ? 'cyan' : 'accent') : 'red');
 
-  /* ETA — enhanced */
+  /* ETA */
   const etaEl = document.getElementById('dp-eta');
   etaEl.textContent = formatEta(data.eta, data.speed);
   etaEl.className   = 'dp-stat-value ' + (moving ? (isEV ? 'cyan' : 'accent') : 'red');
@@ -1872,14 +1879,14 @@ function populatePanelData(busId, data) {
     ? `Engine Running — Bus Moving at ${Math.round(data.speed||0)} km/h`
     : 'Engine Idle — Bus Stopped';
 
-  /* ── Availability info ── */
+  /* Availability info */
   document.getElementById('dp-avail-status-icon').textContent = moving ? '🟢' : '🔴';
   document.getElementById('dp-avail-status-lbl').textContent  = 'Online';
   document.getElementById('dp-avail-motion-icon').textContent = moving ? '🚀' : '⛔';
   document.getElementById('dp-avail-motion-lbl').textContent  = moving ? 'Running' : 'Stopped';
   document.getElementById('dp-avail-pct').textContent         = pct + '%';
 
-  /* ── Sustainability ── */
+  /* Sustainability */
   const fuelBadge = document.getElementById('dp-fuel-badge');
   fuelBadge.textContent = sustain.fuelType;
   fuelBadge.className   = 'dp-fuel-badge ' + sustain.fuelClass;
@@ -1950,6 +1957,8 @@ function animateBus(busId, toLat, toLon) {
 
 /* ──────────────────────────────────────────────────────
    PROCESS BUS UPDATE
+   Adds new bus markers to vehicleLayer (never to plain map).
+   vehicleLayer is never cleared when routes change.
 ────────────────────────────────────────────────────── */
 function processBusUpdate(busId, rawLat, rawLon, forcedSpeed) {
   const { pos: snapped, idx: routeIdx } = snapToRoute(rawLat, rawLon);
@@ -1980,12 +1989,13 @@ function processBusUpdate(busId, rawLat, rawLon, forcedSpeed) {
 
   busData[busId] = { lat, lon, speed, progress, eta, routeIdx, remainingKm };
 
-  /* Create map marker if new */
+  /* Create map marker if new — always add to vehicleLayer */
   if (!busMarkers[busId]) {
+    const layer = getVehicleLayer() || map;
     const marker = L.marker([lat, lon], {
       icon: makeBusIcon(0, busId, moving),
       zIndexOffset: EV_BUS_IDS.has(busId) ? 950 : (isDemo ? 900 : 1000)
-    }).addTo(map);
+    }).addTo(layer);
     marker.bindPopup('', { maxWidth: 240 });
     busMarkers[busId] = { marker, heading: 0, currentPos: [lat, lon], animFrame: null };
   }
@@ -2069,7 +2079,6 @@ function initFirebase() {
           const d = data[busId];
           if (d && d.lat != null && d.lon != null) {
             activeBusIds.add(busId);
-            /* If Firebase includes speed field use it, else derive from movement */
             const fbSpeed = (d.speed != null) ? parseFloat(d.speed) : null;
             processBusUpdate(busId, parseFloat(d.lat), parseFloat(d.lon), fbSpeed);
           }
@@ -2099,31 +2108,139 @@ function initFirebase() {
    DEMO BUSES
 
    BUS-DEMO-01  — CNG bus, STOPPED at 40% of route
-   BUS-EV-01    — Electric bus, RUNNING at 25% of route
-   Both persist permanently on the map.
+   BUS-EV-01    — Electric bus, RUNNING along route
+
+   spawnDemoBuses() uses the current global routeCoords,
+   so it works correctly for any route — initial or sidebar.
+
+   respawnDemoBuses() is exposed on window so sidebar.js
+   can call it after updating routeCoords. It cancels the
+   old EV animation loop and restarts both buses on the
+   new route.
 ────────────────────────────────────────────────────── */
 function spawnDemoBuses() {
   if (!routeCoords.length) return;
 
-  /* ── Bus 1: CNG / Stopped ── */
+  /* ── Bus 1: CNG / Stopped at 40% ── */
   const idx1 = Math.floor(routeCoords.length * 0.4);
   const [lat1, lon1] = routeCoords[idx1];
-  processBusUpdate('BUS-DEMO-01', lat1, lon1, 0); /* speed=0 → Stopped */
+  processBusUpdate('BUS-DEMO-01', lat1, lon1, 0);
 
-  /* ── Bus 2: EV / Running (simulate movement along route) ── */
-  let evIdx = Math.floor(routeCoords.length * 0.25);
+  /* ── Bus 2: EV / Running ── */
+  /* Cancel any running EV loop first */
+  if (evAnimTimeout !== null) {
+    clearTimeout(evAnimTimeout);
+    evAnimTimeout = null;
+  }
+
+  /* Capture the routeCoords at the moment of spawn so this loop
+     always uses the correct route even if routeCoords is later
+     replaced. The loop reads global routeCoords for snapToRoute
+     but positions come from the captured snapshot. */
+  const capturedCoords = routeCoords.slice();
+  let evIdx = Math.floor(capturedCoords.length * 0.25);
+  let loopActive = true;
+
+  /* Store a cancel handle so respawnDemoBuses can stop this loop */
+  spawnDemoBuses._cancelEV = function() { loopActive = false; };
+
   function stepEV() {
-    if (!routeCoords[evIdx]) return;
-    const [lat, lon] = routeCoords[evIdx];
-    const simSpeed = 42 + Math.random() * 18; /* 42–60 km/h */
+    if (!loopActive) return;
+    if (!capturedCoords[evIdx]) { evIdx = 0; }
+    const [lat, lon] = capturedCoords[evIdx];
+    const simSpeed = 42 + Math.random() * 18;
     processBusUpdate('BUS-EV-01', lat, lon, simSpeed);
-    evIdx = (evIdx + Math.floor(routeCoords.length * 0.015)) % routeCoords.length;
-    setTimeout(stepEV, 4000 + Math.random() * 2000);
+    evIdx = (evIdx + Math.floor(capturedCoords.length * 0.015)) % capturedCoords.length;
+    evAnimTimeout = setTimeout(stepEV, 4000 + Math.random() * 2000);
   }
   stepEV();
-
-  showToast('Demo buses spawned: CNG (stopped) + EV (running) ✓');
 }
+
+/* ── Exposed on window so sidebar.js can call this after a route change ── */
+/* ──────────────────────────────────────────────────────
+   PASTE THIS BLOCK into map.html, replacing the existing
+   window.respawnDemoBuses = function() { ... }; block.
+   It is the only change required in map.html.
+────────────────────────────────────────────────────── */
+
+/* ── Exposed on window so sidebar.js can call this after a route change ──
+   CHANGED: now accepts an optional `newCoords` parameter.
+   When sidebar.js selects a new route it passes the coords array here so
+   the closure-scoped `routeCoords` variable (local to this <script> block)
+   is updated BEFORE spawnDemoBuses() runs.  Without this the demo buses
+   would keep using the original route because `window.routeCoords` and the
+   internal `routeCoords` binding are different variables in JavaScript.     */
+window.respawnDemoBuses = function(newCoords) {
+
+  /* ── Sync internal routeCoords with the new route if provided ──────────
+     sidebar.js calls:  window.respawnDemoBuses(coords)
+     map.html's `routeCoords` var (declared with `let` inside this <script>)
+     is a separate binding from `window.routeCoords`, so we must assign it
+     explicitly here.  We also recalculate routeTotalKm and regenerate the
+     bus stop array so all downstream functions (snapToRoute, calcRemainingKm,
+     getNextStop, populatePanelData, etc.) operate on the correct route.     */
+  if (newCoords && Array.isArray(newCoords) && newCoords.length > 0) {
+    routeCoords  = newCoords;
+
+    /* Recalculate total distance for the new route */
+    routeTotalKm = (function() {
+      var km = 0;
+      for (var i = 0; i < routeCoords.length - 1; i++) {
+        km += haversine(routeCoords[i], routeCoords[i + 1]);
+      }
+      return km;
+    })();
+
+    /* Refresh bus stop markers for the new route so getNextStop() returns
+       meaningful values instead of stops from the old route.              */
+    clearStopMarkers();
+    busStops = generateStops(routeCoords, 6);
+    busStops.forEach(function(s, i) { placeStopMarker(s, i); });
+    enrichStopNames(busStops).catch(function(e) {
+      console.warn('[map.html] Stop name enrichment failed after route change:', e);
+    });
+  }
+
+  /* Stop the currently running EV animation loop */
+  if (typeof spawnDemoBuses._cancelEV === 'function') {
+    spawnDemoBuses._cancelEV();
+    spawnDemoBuses._cancelEV = null;
+  }
+  if (evAnimTimeout !== null) {
+    clearTimeout(evAnimTimeout);
+    evAnimTimeout = null;
+  }
+
+ /* Reset remaining-distance cache so topbar distance recalculates
+     from the start of the new route rather than carrying over stale
+     values from the old one.                                         */
+  delete busRemainingKm['BUS-DEMO-01'];
+  delete busRemainingKm['BUS-EV-01'];
+
+  /* ── Remove existing demo bus markers so processBusUpdate()
+     creates fresh ones snapped to the new route, instead of
+     animating the old markers from their stale positions.           */
+  ['BUS-DEMO-01', 'BUS-EV-01'].forEach(function(id) {
+    if (busMarkers[id]) {
+      if (busMarkers[id].animFrame) {
+        cancelAnimationFrame(busMarkers[id].animFrame);
+      }
+      busMarkers[id].marker.remove();
+      delete busMarkers[id];
+    }
+    /* Clear stale position/speed data so speed-derivation
+       on the next update doesn't compute a bogus value
+       from old coordinates.                                         */
+    delete busData[id];
+    delete lastUpdateTime[id];
+  });
+
+  /* Respawn both demo buses on the now-updated routeCoords */
+  if (routeCoords.length) {
+    spawnDemoBuses();
+    showToast('🚌 Demo buses repositioned on new route');
+  }
+};
 
 /* ──────────────────────────────────────────────────────
    PANEL INTERACTION WIRING
@@ -2155,6 +2272,10 @@ async function init() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors', maxZoom: 19, keepBuffer: 4
   }).addTo(map);
+
+  /* Create dedicated vehicle layer immediately so markers always land here */
+  vehicleLayer = L.layerGroup().addTo(map);
+  window._btVehicleLayer = vehicleLayer;
 
   document.getElementById('btn-zoom-in').addEventListener('click',  () => map.zoomIn());
   document.getElementById('btn-zoom-out').addEventListener('click', () => map.zoomOut());
