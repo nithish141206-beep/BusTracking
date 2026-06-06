@@ -98,7 +98,6 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  overflow-y: auto;
 }
 
 /* Brand strip at top */
@@ -151,7 +150,7 @@ body {
   border-radius: 24px;
   padding: 44px 40px 40px;
   width: 100%;
-  max-width: 460px;
+  max-width: 420px;
   text-align: center;
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.04) inset,
@@ -207,130 +206,6 @@ body {
   color: var(--text-2);
   margin-bottom: 28px;
   line-height: 1.6;
-}
-
-/* ════════════════════════════════════════
-   SCHEDULE TICKER
-════════════════════════════════════════ */
-.schedule-ticker {
-  background: rgba(249,115,22,0.06);
-  border: 1px solid rgba(249,115,22,0.15);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-.schedule-ticker-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 8px;
-}
-.schedule-ticker-icon {
-  font-size: 13px;
-}
-.schedule-ticker-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.schedule-ticker-time {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--text-3);
-  font-family: 'DM Sans', monospace;
-}
-.schedule-ticker-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.schedule-ticker-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11.5px;
-}
-.schedule-ticker-route {
-  color: var(--text-2);
-  font-weight: 500;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-.schedule-ticker-eta {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--green);
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-.schedule-ticker-eta.soon {
-  color: var(--accent);
-  animation: etaBlink 1.2s ease-in-out infinite;
-}
-@keyframes etaBlink {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.5; }
-}
-.schedule-ticker-status {
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-.schedule-ticker-status.running {
-  background: rgba(34,197,94,0.1);
-  border: 1px solid rgba(34,197,94,0.25);
-  color: #86efac;
-}
-.schedule-ticker-status.approaching {
-  background: rgba(249,115,22,0.1);
-  border: 1px solid rgba(249,115,22,0.25);
-  color: var(--accent);
-}
-
-/* ════════════════════════════════════════
-   TRAFFIC STATUS BANNER
-════════════════════════════════════════ */
-.traffic-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 13px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-.traffic-dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.traffic-dot.clear { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.traffic-dot.moderate { background: #facc15; box-shadow: 0 0 6px #facc15; }
-.traffic-dot.heavy { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-.traffic-text {
-  font-size: 12px;
-  color: var(--text-2);
-  flex: 1;
-}
-.traffic-text strong { color: var(--text-1); }
-.traffic-delay {
-  font-size: 11px;
-  color: var(--text-3);
-  flex-shrink: 0;
 }
 
 /* ════════════════════════════════════════
@@ -449,62 +324,6 @@ button#track-btn:hover {
 }
 button#track-btn:active { transform: scale(0.98); }
 
-/* ════════════════════════════════════════
-   PROXIMITY ALERT TOGGLE
-════════════════════════════════════════ */
-.alert-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  margin-top: 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  text-align: left;
-}
-.alert-toggle-row:hover {
-  background: rgba(249,115,22,0.05);
-  border-color: rgba(249,115,22,0.2);
-}
-.alert-toggle-icon { font-size: 15px; flex-shrink: 0; }
-.alert-toggle-text { flex: 1; }
-.alert-toggle-label {
-  font-size: 12px;
-  color: var(--text-1);
-  font-weight: 500;
-}
-.alert-toggle-sub {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-top: 1px;
-}
-.toggle-switch {
-  width: 36px; height: 20px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-  position: relative;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-.toggle-switch.on {
-  background: var(--accent);
-}
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: white;
-  transition: transform 0.2s;
-}
-.toggle-switch.on::after {
-  transform: translateX(16px);
-}
-
 /* Footer note */
 .footer-note {
   margin-top: 16px;
@@ -512,245 +331,6 @@ button#track-btn:active { transform: scale(0.98); }
   color: var(--text-3);
   line-height: 1.6;
 }
-
-/* ════════════════════════════════════════
-   UPCOMING SCHEDULE MODAL
-════════════════════════════════════════ */
-.schedule-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  width: 100%;
-  padding: 11px;
-  background: rgba(59,130,246,0.08);
-  border: 1px solid rgba(59,130,246,0.2);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #93c5fd;
-  margin-top: 10px;
-  transition: all 0.18s;
-}
-.schedule-btn:hover {
-  background: rgba(59,130,246,0.14);
-  border-color: rgba(59,130,246,0.35);
-}
-
-/* Schedule Modal Overlay */
-#schedule-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-#schedule-modal.open { display: flex; }
-
-.schedule-modal-card {
-  background: rgba(11, 16, 30, 0.98);
-  border: 1px solid var(--border-hi);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 480px;
-  max-height: 85vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.8);
-  animation: modalReveal 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-@keyframes modalReveal {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.sched-modal-header {
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-.sched-modal-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sched-modal-icon {
-  width: 32px; height: 32px;
-  background: rgba(59,130,246,0.1);
-  border: 1px solid rgba(59,130,246,0.25);
-  border-radius: 9px;
-  display: grid; place-items: center;
-  font-size: 15px;
-}
-.sched-modal-name {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 16px;
-  color: var(--text-1);
-}
-.sched-modal-sub {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-top: 1px;
-}
-.sched-modal-close {
-  width: 30px; height: 30px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border-hi);
-  border-radius: 8px;
-  display: grid; place-items: center;
-  cursor: pointer;
-  color: var(--text-3);
-  font-size: 14px;
-  transition: all 0.15s;
-}
-.sched-modal-close:hover {
-  background: rgba(239,68,68,0.1);
-  border-color: rgba(239,68,68,0.3);
-  color: #f87171;
-}
-
-.sched-modal-body {
-  overflow-y: auto;
-  flex: 1;
-  padding: 14px 20px 20px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.sched-route-select {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.sched-route-chip {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  background: rgba(255,255,255,0.03);
-  transition: all 0.15s;
-  letter-spacing: 0.3px;
-}
-.sched-route-chip.active {
-  background: rgba(249,115,22,0.12);
-  border-color: rgba(249,115,22,0.35);
-  color: var(--accent);
-}
-
-.sched-section-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.9px;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 8px;
-  margin-top: 10px;
-}
-
-.sched-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.sched-table thead th {
-  text-align: left;
-  padding: 7px 10px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(249,115,22,0.05);
-  border-bottom: 1px solid rgba(249,115,22,0.1);
-}
-.sched-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-  transition: background 0.12s;
-  cursor: default;
-}
-.sched-table tbody tr:hover { background: rgba(249,115,22,0.03); }
-.sched-table tbody td {
-  padding: 9px 10px;
-  font-size: 12px;
-  color: var(--text-2);
-  vertical-align: middle;
-}
-.sched-table tbody td:first-child { color: var(--text-1); font-weight: 500; }
-.sched-time-badge {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--text-1);
-}
-.sched-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-.sched-status-chip.on-time {
-  background: rgba(34,197,94,0.1);
-  border: 1px solid rgba(34,197,94,0.25);
-  color: #86efac;
-}
-.sched-status-chip.delayed {
-  background: rgba(249,115,22,0.1);
-  border: 1px solid rgba(249,115,22,0.25);
-  color: var(--accent);
-}
-.sched-status-chip.arriving {
-  background: rgba(59,130,246,0.1);
-  border: 1px solid rgba(59,130,246,0.25);
-  color: #93c5fd;
-  animation: etaBlink 1.2s ease-in-out infinite;
-}
-.sched-status-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-}
-.sched-status-chip.on-time .sched-status-dot { background: #22c55e; }
-.sched-status-chip.delayed .sched-status-dot { background: var(--accent); }
-.sched-status-chip.arriving .sched-status-dot { background: #3b82f6; animation: livePulse 1.2s infinite; }
-
-.sched-fuel-tag {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-.sched-fuel-tag.ev { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); color: #06b6d4; }
-.sched-fuel-tag.cng { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
-.sched-fuel-tag.diesel { background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); color: var(--accent); }
-
-.sched-emission-tag {
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 8px;
-}
-.sched-emission-tag.bs6 { background: rgba(59,130,246,0.08); color: #93c5fd; }
-.sched-emission-tag.bs4 { background: rgba(249,115,22,0.08); color: var(--accent); }
-.sched-emission-tag.zero { background: rgba(34,197,94,0.08); color: #86efac; }
 
 /* ════════════════════════════════════════
    STATS STRIP  (decorative, bottom)
@@ -768,46 +348,6 @@ button#track-btn:active { transform: scale(0.98); }
 .stat-item { text-align: center; }
 .stat-val { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
 .stat-lbl { font-size: 10px; color: var(--text-3); letter-spacing: 0.4px; text-transform: uppercase; margin-top: 1px; }
-
-/* ════════════════════════════════════════
-   PROXIMITY ALERT NOTIFICATION
-════════════════════════════════════════ */
-#proximity-alert {
-  display: none;
-  position: fixed;
-  top: 80px; left: 50%; transform: translateX(-50%);
-  z-index: 9999;
-  background: rgba(11,16,30,0.97);
-  border: 1px solid rgba(249,115,22,0.4);
-  border-radius: 14px;
-  padding: 12px 18px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(249,115,22,0.08) inset;
-  animation: alertSlide 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-  max-width: 340px;
-  width: calc(100% - 40px);
-  backdrop-filter: blur(20px);
-}
-#proximity-alert.show { display: flex; align-items: center; gap: 10px; }
-@keyframes alertSlide {
-  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-.alert-icon { font-size: 22px; flex-shrink: 0; }
-.alert-content { flex: 1; }
-.alert-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin-bottom: 2px; }
-.alert-desc { font-size: 11px; color: var(--text-2); }
-.alert-dismiss {
-  width: 24px; height: 24px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 6px;
-  display: grid; place-items: center;
-  cursor: pointer;
-  font-size: 11px;
-  color: var(--text-3);
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-.alert-dismiss:hover { background: rgba(255,255,255,0.12); color: var(--text-1); }
 </style>
 </head>
 
@@ -825,16 +365,6 @@ button#track-btn:active { transform: scale(0.98); }
   <div class="brand-tag">Live</div>
 </div>
 
-<!-- Proximity Alert Notification -->
-<div id="proximity-alert">
-  <div class="alert-icon">🔔</div>
-  <div class="alert-content">
-    <div class="alert-title" id="alert-title">Bus Approaching!</div>
-    <div class="alert-desc" id="alert-desc">Your bus is 2 stops away.</div>
-  </div>
-  <div class="alert-dismiss" onclick="dismissAlert()">✕</div>
-</div>
-
 <!-- Main page -->
 <div class="page-wrap">
   <div class="overlay">
@@ -843,43 +373,7 @@ button#track-btn:active { transform: scale(0.98); }
     <div class="live-chip"><div class="live-dot"></div>Real-Time Tracking</div>
 
     <h1>Find Your <span>Bus</span><br/>Instantly</h1>
-    <p>Live GPS tracking across Tamil Nadu &amp; Himachal Pradesh.<br/>Select your route and track in real time.</p>
-
-    <!-- Schedule Ticker -->
-    <div class="schedule-ticker">
-      <div class="schedule-ticker-header">
-        <span class="schedule-ticker-icon">🕐</span>
-        <span class="schedule-ticker-title">Upcoming Arrivals</span>
-        <span class="schedule-ticker-time" id="ticker-clock">--:--</span>
-      </div>
-      <div class="schedule-ticker-rows" id="ticker-rows">
-        <div class="schedule-ticker-row">
-          <span class="schedule-ticker-route">Coimbatore → Chennai</span>
-          <span class="schedule-ticker-eta soon">3 min</span>
-          <span class="schedule-ticker-status approaching">Arriving</span>
-        </div>
-        <div class="schedule-ticker-row">
-          <span class="schedule-ticker-route">Salem → Erode</span>
-          <span class="schedule-ticker-eta">12 min</span>
-          <span class="schedule-ticker-status running">On Time</span>
-        </div>
-        <div class="schedule-ticker-row">
-          <span class="schedule-ticker-route">Shimla → Manali</span>
-          <span class="schedule-ticker-eta">18 min</span>
-          <span class="schedule-ticker-status running">On Time</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Traffic Banner -->
-    <div class="traffic-banner" id="traffic-banner">
-      <div class="traffic-dot clear" id="traffic-dot"></div>
-      <div class="traffic-text">
-        <strong id="traffic-label">Traffic: Clear</strong>
-        <span id="traffic-detail"> — Roads are flowing normally</span>
-      </div>
-      <span class="traffic-delay" id="traffic-delay"></span>
-    </div>
+    <p>Live GPS tracking across Tamil Nadu.<br/>Select your route and track in real time.</p>
 
     <!-- Route inputs -->
     <div class="input-group-label">From</div>
@@ -906,21 +400,6 @@ button#track-btn:active { transform: scale(0.98); }
       🚌 Track Bus
     </button>
 
-    <!-- Proximity Alert Toggle -->
-    <div class="alert-toggle-row" onclick="toggleProximityAlert()">
-      <span class="alert-toggle-icon">🔔</span>
-      <div class="alert-toggle-text">
-        <div class="alert-toggle-label">Proximity Alerts</div>
-        <div class="alert-toggle-sub">Notify me when bus is 2 stops away</div>
-      </div>
-      <div class="toggle-switch" id="alert-toggle-switch"></div>
-    </div>
-
-    <!-- View Schedule Button -->
-    <button class="schedule-btn" onclick="openScheduleModal()">
-      📅 View Bus Schedule &amp; Timings
-    </button>
-
     <div class="footer-note">
       By continuing you agree to our Terms of Service
     </div>
@@ -930,62 +409,9 @@ button#track-btn:active { transform: scale(0.98); }
 
 <!-- Stats strip -->
 <div class="stats-strip">
-  <div class="stat-item"><div class="stat-val" id="stat-districts">38</div><div class="stat-lbl">Districts</div></div>
+  <div class="stat-item"><div class="stat-val">38</div><div class="stat-lbl">Districts</div></div>
   <div class="stat-item"><div class="stat-val">Live</div><div class="stat-lbl">GPS</div></div>
   <div class="stat-item"><div class="stat-val">24/7</div><div class="stat-lbl">Tracking</div></div>
-  <div class="stat-item"><div class="stat-val" id="stat-routes">120+</div><div class="stat-lbl">Routes</div></div>
-</div>
-
-<!-- ════ SCHEDULE MODAL ════ -->
-<div id="schedule-modal">
-  <div class="schedule-modal-card">
-    <div class="sched-modal-header">
-      <div class="sched-modal-title">
-        <div class="sched-modal-icon">📅</div>
-        <div>
-          <div class="sched-modal-name">Bus Schedule</div>
-          <div class="sched-modal-sub">Real-time timetable &amp; availability</div>
-        </div>
-      </div>
-      <div class="sched-modal-close" onclick="closeScheduleModal()">✕</div>
-    </div>
-    <div class="sched-modal-body">
-
-      <!-- Route selector chips -->
-      <div class="sched-route-select" id="sched-route-chips"></div>
-
-      <!-- Table section -->
-      <div class="sched-section-label">Upcoming Departures</div>
-      <table class="sched-table">
-        <thead>
-          <tr>
-            <th>Route</th>
-            <th>Departure</th>
-            <th>ETA</th>
-            <th>Fuel</th>
-            <th>Emission</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="sched-tbody"></tbody>
-      </table>
-
-      <!-- Next arrival section -->
-      <div class="sched-section-label" style="margin-top:18px;">Estimated Next Arrival at Stop</div>
-      <table class="sched-table">
-        <thead>
-          <tr>
-            <th>Stop</th>
-            <th>Bus</th>
-            <th>Arriving In</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="sched-stops-tbody"></tbody>
-      </table>
-
-    </div>
-  </div>
 </div>
 
 <script>
@@ -1042,15 +468,7 @@ const places = [
 "Puthur","Alanthurai",
 "Kinathukadavu","Myleripalayam","Nachipalayam",
 "Malumichampatti","Othakalmandapam","Samathur",
-"Suleeswaranpatti","Annamalai Hills",
-/* ── Himachal Pradesh ── */
-"Shimla","Manali","Dharamsala","Kullu","Mandi","Solan","Kangra",
-"Hamirpur","Bilaspur","Una","Chamba","Kinnaur","Lahaul","Spiti",
-"Sirmaur","Nahan","Palampur","Dalhousie","McLeod Ganj","Kasauli",
-"Baddi","Parwanoo","Nalagarh","Sundernagar","Rampur Bushahr",
-"Keylong","Kaza","Kalpa","Reckong Peo","Sangla",
-"Joginder Nagar","Baijnath","Nurpur","Pathankot Bus Stand",
-"Rohtang Pass","Solang Valley","Bhuntar","Aut","Pandoh"
+"Suleeswaranpatti","Annamalai Hills"
 ];
 
 places.sort();
@@ -1064,7 +482,7 @@ function showList(value, listId, inputId) {
     : places.filter(p => p.toLowerCase().includes(value.toLowerCase()));
   let html = "";
   list.forEach(p => {
-    html += `<div onclick="selectPlace('${p.replace(/'/g,"\\'")}','${inputId}','${listId}')">${p}</div>`;
+    html += `<div onclick="selectPlace('${p}','${inputId}','${listId}')">${p}</div>`;
   });
   document.getElementById(listId).innerHTML = html;
 }
@@ -1079,291 +497,6 @@ document.addEventListener("click", function(e) {
     document.getElementById("fromList").innerHTML = "";
     document.getElementById("toList").innerHTML   = "";
   }
-});
-
-/* ══════════════════════════════════════════════
-   LIVE CLOCK TICKER
-══════════════════════════════════════════════ */
-function updateTickerClock() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const el = document.getElementById('ticker-clock');
-  if (el) el.textContent = h + ':' + m;
-}
-setInterval(updateTickerClock, 1000);
-updateTickerClock();
-
-/* ══════════════════════════════════════════════
-   DYNAMIC SCHEDULE TICKER — counts down ETAs
-══════════════════════════════════════════════ */
-const TICKER_SCHEDULES = [
-  { route: 'Coimbatore → Chennai', etaMin: 3,  fuel: 'Diesel', emission: 'BS-VI', status: 'approaching' },
-  { route: 'Salem → Erode',        etaMin: 12, fuel: 'CNG',    emission: 'BS-VI', status: 'running' },
-  { route: 'Shimla → Manali',      etaMin: 18, fuel: 'Diesel', emission: 'BS-IV', status: 'running' },
-  { route: 'Dharamsala → Kullu',   etaMin: 25, fuel: 'Diesel', emission: 'BS-VI', status: 'running' },
-  { route: 'Madurai → Dindigul',   etaMin: 31, fuel: 'CNG',    emission: 'BS-VI', status: 'running' },
-];
-
-let tickerStartTime = Date.now();
-
-function updateTicker() {
-  const elapsed = Math.floor((Date.now() - tickerStartTime) / 60000);
-  const container = document.getElementById('ticker-rows');
-  if (!container) return;
-  let html = '';
-  const displayed = TICKER_SCHEDULES.slice(0, 3);
-  displayed.forEach(s => {
-    let remaining = s.etaMin - elapsed;
-    if (remaining <= 0) remaining = s.etaMin + Math.ceil(Math.abs(remaining) / s.etaMin) * s.etaMin - elapsed % s.etaMin;
-    remaining = Math.max(1, remaining % (s.etaMin + 5));
-    const isSoon = remaining <= 4;
-    const statusLabel = remaining <= 2 ? 'Arriving' : (isSoon ? 'Approaching' : 'On Time');
-    const statusClass = remaining <= 2 ? 'approaching' : (isSoon ? 'approaching' : 'running');
-    html += `
-      <div class="schedule-ticker-row">
-        <span class="schedule-ticker-route">${s.route}</span>
-        <span class="schedule-ticker-eta${isSoon?' soon':''}">${remaining} min</span>
-        <span class="schedule-ticker-status ${statusClass}">${statusLabel}</span>
-      </div>`;
-  });
-  container.innerHTML = html;
-}
-setInterval(updateTicker, 30000);
-
-/* ══════════════════════════════════════════════
-   TRAFFIC STATUS SIMULATION
-   In a production system this would call a
-   real traffic API (e.g. HERE, TomTom, Google).
-   We simulate realistic traffic patterns based
-   on time-of-day (rush hours = heavy traffic).
-══════════════════════════════════════════════ */
-function updateTrafficStatus() {
-  const hour = new Date().getHours();
-  const dot   = document.getElementById('traffic-dot');
-  const label = document.getElementById('traffic-label');
-  const detail= document.getElementById('traffic-detail');
-  const delay = document.getElementById('traffic-delay');
-  if (!dot || !label || !detail || !delay) return;
-
-  let level, labelText, detailText, delayText;
-
-  /* Rush hour thresholds */
-  if ((hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 20)) {
-    level = 'heavy';
-    labelText = 'Traffic: Heavy';
-    detailText = ' — Rush hour congestion detected';
-    delayText  = '+12–20 min delay';
-  } else if ((hour >= 7 && hour < 8) || (hour >= 10 && hour <= 12) || (hour >= 16 && hour < 17) || (hour >= 20 && hour <= 21)) {
-    level = 'moderate';
-    labelText = 'Traffic: Moderate';
-    detailText = ' — Occasional slowdowns on major routes';
-    delayText  = '+5–10 min delay';
-  } else {
-    level = 'clear';
-    labelText = 'Traffic: Clear';
-    detailText = ' — Roads are flowing normally';
-    delayText  = '';
-  }
-
-  dot.className   = 'traffic-dot ' + level;
-  label.textContent = labelText;
-  detail.textContent = detailText;
-  delay.textContent  = delayText;
-}
-updateTrafficStatus();
-setInterval(updateTrafficStatus, 60000);
-
-/* ══════════════════════════════════════════════
-   PROXIMITY ALERT TOGGLE
-══════════════════════════════════════════════ */
-let proximityAlertsEnabled = false;
-
-function toggleProximityAlert() {
-  proximityAlertsEnabled = !proximityAlertsEnabled;
-  const sw = document.getElementById('alert-toggle-switch');
-  if (sw) sw.classList.toggle('on', proximityAlertsEnabled);
-  if (proximityAlertsEnabled) {
-    showProximityAlert('Alerts Enabled', 'You will be notified when your bus is 2 stops away.');
-  }
-}
-
-function showProximityAlert(title, desc) {
-  const el   = document.getElementById('proximity-alert');
-  const ttl  = document.getElementById('alert-title');
-  const dsc  = document.getElementById('alert-desc');
-  if (!el) return;
-  ttl.textContent = title;
-  dsc.textContent = desc;
-  el.classList.add('show');
-  setTimeout(dismissAlert, 5000);
-}
-
-function dismissAlert() {
-  const el = document.getElementById('proximity-alert');
-  if (el) el.classList.remove('show');
-}
-
-/* Store setting in sessionStorage so map.html can read it */
-document.addEventListener('DOMContentLoaded', function() {
-  const sw = document.getElementById('alert-toggle-switch');
-  const stored = sessionStorage.getItem('bt_proximity_alerts');
-  if (stored === '1') {
-    proximityAlertsEnabled = true;
-    if (sw) sw.classList.add('on');
-  }
-});
-
-/* Persist alert setting before navigating to map */
-const origTrack = window.trackBus;
-window.trackBus = function() {
-  sessionStorage.setItem('bt_proximity_alerts', proximityAlertsEnabled ? '1' : '0');
-  let from = document.getElementById("from").value.trim();
-  let to   = document.getElementById("to").value.trim();
-  if (from === "" || to === "") {
-    alert("Please enter both locations");
-    return;
-  }
-  window.location.href = "map.html?from=" + encodeURIComponent(from) + "&to=" + encodeURIComponent(to);
-};
-
-/* ══════════════════════════════════════════════
-   SCHEDULE MODAL
-══════════════════════════════════════════════ */
-
-/* Master schedule data — would come from a GTFS/API in production */
-const SCHEDULE_DATA = {
-  /* Tamil Nadu routes */
-  'CBE → MAS': [
-    { departure:'06:00', etaMin:360, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-001' },
-    { departure:'08:00', etaMin:350, fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-002' },
-    { departure:'10:00', etaMin:380, fuel:'Diesel', fuelClass:'diesel', emission:'BS-IV', emClass:'bs4', status:'delayed', busId:'TN-003' },
-    { departure:'12:00', etaMin:360, fuel:'Electric',fuelClass:'ev',    emission:'Zero',  emClass:'zero',status:'on-time', busId:'TN-EV-01' },
-    { departure:'14:00', etaMin:355, fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-004' },
-    { departure:'16:00', etaMin:390, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'delayed', busId:'TN-005' },
-    { departure:'18:00', etaMin:365, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-006' },
-    { departure:'21:00', etaMin:345, fuel:'Electric',fuelClass:'ev',    emission:'Zero',  emClass:'zero',status:'on-time', busId:'TN-EV-02' },
-  ],
-  'SLM → ERD': [
-    { departure:'05:30', etaMin:90,  fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-010' },
-    { departure:'07:00', etaMin:95,  fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-011' },
-    { departure:'09:00', etaMin:110, fuel:'Diesel', fuelClass:'diesel', emission:'BS-IV', emClass:'bs4', status:'delayed', busId:'TN-012' },
-    { departure:'12:00', etaMin:88,  fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-013' },
-    { departure:'15:00', etaMin:92,  fuel:'Electric',fuelClass:'ev',    emission:'Zero',  emClass:'zero',status:'on-time', busId:'TN-EV-03' },
-    { departure:'18:30', etaMin:100, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-014' },
-  ],
-  /* Himachal Pradesh routes */
-  'SHL → MNL': [
-    { departure:'06:30', etaMin:300, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-001' },
-    { departure:'08:00', etaMin:330, fuel:'Diesel', fuelClass:'diesel', emission:'BS-IV', emClass:'bs4', status:'delayed', busId:'HP-002' },
-    { departure:'10:30', etaMin:310, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-003' },
-    { departure:'13:00', etaMin:295, fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-004' },
-    { departure:'15:30', etaMin:320, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-005' },
-  ],
-  'DRM → KLU': [
-    { departure:'07:00', etaMin:180, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-010' },
-    { departure:'09:30', etaMin:195, fuel:'Diesel', fuelClass:'diesel', emission:'BS-IV', emClass:'bs4', status:'on-time', busId:'HP-011' },
-    { departure:'12:00', etaMin:185, fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-012' },
-    { departure:'15:00', etaMin:190, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'delayed', busId:'HP-013' },
-    { departure:'18:00', etaMin:175, fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'HP-014' },
-  ],
-  'MDU → DGL': [
-    { departure:'05:00', etaMin:70,  fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-020' },
-    { departure:'07:30', etaMin:75,  fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-021' },
-    { departure:'10:00', etaMin:80,  fuel:'Electric',fuelClass:'ev',    emission:'Zero',  emClass:'zero',status:'on-time', busId:'TN-EV-04' },
-    { departure:'13:00', etaMin:72,  fuel:'CNG',    fuelClass:'cng',    emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-022' },
-    { departure:'16:00', etaMin:85,  fuel:'Diesel', fuelClass:'diesel', emission:'BS-IV', emClass:'bs4', status:'delayed', busId:'TN-023' },
-    { departure:'19:00', etaMin:73,  fuel:'Diesel', fuelClass:'diesel', emission:'BS-VI', emClass:'bs6', status:'on-time', busId:'TN-024' },
-  ],
-};
-
-/* Stop-level arrival estimates */
-const STOP_ARRIVALS = [
-  { stop:'Gandhipuram Bus Stand', bus:'TN-002 (CNG · BS-VI)', arrivingIn:'4 min',  status:'arriving' },
-  { stop:'Singanallur',           bus:'TN-003 (Diesel · BS-IV)', arrivingIn:'9 min',  status:'on-time' },
-  { stop:'Ukkadam',               bus:'TN-EV-01 (Electric · Zero)', arrivingIn:'14 min', status:'on-time' },
-  { stop:'Coimbatore Junction',   bus:'TN-004 (CNG · BS-VI)', arrivingIn:'22 min', status:'on-time' },
-  { stop:'Shimla Bus Stand',      bus:'HP-001 (Diesel · BS-VI)', arrivingIn:'8 min',  status:'arriving' },
-  { stop:'Manali ISBT',           bus:'HP-003 (Diesel · BS-VI)', arrivingIn:'17 min', status:'on-time' },
-];
-
-let activeSchedRoute = 'CBE → MAS';
-
-function buildSchedChips() {
-  const container = document.getElementById('sched-route-chips');
-  if (!container) return;
-  const routes = Object.keys(SCHEDULE_DATA);
-  container.innerHTML = routes.map(r =>
-    `<div class="sched-route-chip${r===activeSchedRoute?' active':''}" onclick="selectSchedRoute('${r}')">${r}</div>`
-  ).join('');
-}
-
-function selectSchedRoute(route) {
-  activeSchedRoute = route;
-  buildSchedChips();
-  renderSchedTable();
-}
-
-function renderSchedTable() {
-  const tbody = document.getElementById('sched-tbody');
-  if (!tbody) return;
-  const entries = SCHEDULE_DATA[activeSchedRoute] || [];
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  tbody.innerHTML = entries.map(e => {
-    const [dh, dm] = e.departure.split(':').map(Number);
-    const depMin = dh * 60 + dm;
-    const diffMin = depMin - currentMinutes;
-
-    let statusClass = e.status === 'delayed' ? 'delayed' : 'on-time';
-    let statusLabel = e.status === 'delayed' ? 'Delayed' : 'On Time';
-    if (diffMin >= 0 && diffMin <= 10) { statusClass = 'arriving'; statusLabel = 'Arriving'; }
-
-    const arrivalHours = Math.floor(e.etaMin / 60);
-    const arrivalMins  = e.etaMin % 60;
-    const etaStr = arrivalHours > 0 ? `~${arrivalHours}h ${arrivalMins}m` : `~${arrivalMins} min`;
-
-    return `<tr>
-      <td>${activeSchedRoute}</td>
-      <td><span class="sched-time-badge">${e.departure}</span></td>
-      <td>${etaStr}</td>
-      <td><span class="sched-fuel-tag ${e.fuelClass}">${e.fuel}</span></td>
-      <td><span class="sched-emission-tag ${e.emClass}">${e.emission}</span></td>
-      <td><span class="sched-status-chip ${statusClass}"><span class="sched-status-dot"></span>${statusLabel}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-function renderStopArrivals() {
-  const tbody = document.getElementById('sched-stops-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = STOP_ARRIVALS.map(s => {
-    const statusClass = s.status === 'arriving' ? 'arriving' : 'on-time';
-    const statusLabel = s.status === 'arriving' ? 'Arriving' : 'On Time';
-    return `<tr>
-      <td>${s.stop}</td>
-      <td style="font-size:11px;color:#94a3b8;">${s.bus}</td>
-      <td><span class="sched-time-badge">${s.arrivingIn}</span></td>
-      <td><span class="sched-status-chip ${statusClass}"><span class="sched-status-dot"></span>${statusLabel}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-function openScheduleModal() {
-  buildSchedChips();
-  renderSchedTable();
-  renderStopArrivals();
-  document.getElementById('schedule-modal').classList.add('open');
-}
-
-function closeScheduleModal() {
-  document.getElementById('schedule-modal').classList.remove('open');
-}
-
-/* Close modal on backdrop click */
-document.getElementById('schedule-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeScheduleModal();
 });
 </script>
 
